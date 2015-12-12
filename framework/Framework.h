@@ -13,13 +13,13 @@ public:
 template<typename DataType, typename ResultType>
 class ProblemImpl {
 public:
-    virtual bool testDivide(DataType a, DataType b);
+    virtual bool testDivide(DataType a, DataType b) = 0;
 
-    virtual ResultType merge(ResultType a, ResultType b);
+    virtual ResultType merge(ResultType a, ResultType b) = 0;
 
-    virtual ResultType compute(DataType a, DataType b);
+    virtual ResultType compute(DataType a, DataType b) = 0;
 
-    virtual DividedData<DataType> divide(DataType a, DataType b);
+    virtual DividedData<DataType> divide(DataType a, DataType b) = 0;
 };
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
