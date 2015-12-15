@@ -28,7 +28,8 @@ public:
     ProblemImpl<DataType, ResultType> &problem;
     int numThreads;
 
-    ProblemSolver(ProblemImpl<DataType, ResultType> &problem, int numThreads) : problem(problem), numThreads(numThreads) { }
+    ProblemSolver(ProblemImpl<DataType, ResultType> &problem, int numThreads) : problem(problem),
+                                                                                numThreads(numThreads) { }
 
     void start();
 };

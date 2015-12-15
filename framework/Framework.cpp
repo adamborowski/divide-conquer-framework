@@ -12,3 +12,7 @@ void ProblemSolver<DataType, ResultType>::start() {
         cout << "Thread" << omp_get_thread_num();
     }
 }
+
+
+template
+class ProblemSolver<double, double>;
