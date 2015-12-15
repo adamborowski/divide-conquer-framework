@@ -22,4 +22,15 @@ public:
     virtual DividedData<DataType> divide(DataType a, DataType b) = 0;
 };
 
+template<typename DataType, typename ResultType>
+class ProblemSolver {
+public:
+    ProblemImpl<DataType, ResultType> &problem;
+    int numThreads;
+
+    ProblemSolver(ProblemImpl<DataType, ResultType> &problem, int numThreads) : problem(problem), numThreads(numThreads) { }
+
+    void start();
+};
+
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
