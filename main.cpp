@@ -1,6 +1,8 @@
 #include <iostream>
 #include <math.h>
-#include "framework/Framework.h"
+
+#include "framework/Framework.cpp"
+
 
 using namespace std;
 
@@ -40,8 +42,8 @@ public:
     }
 
 
-    virtual DividedData<IntParam> divide(IntParam param) {
-        DividedData<IntParam> d;
+    virtual DividedParams<IntParam> divide(IntParam param) {
+        DividedParams<IntParam> d;
         d.param1.a = param.a;
         d.param1.b = (param.a + param.b) / 2;
         d.param2.a = d.param1.b;
@@ -63,7 +65,7 @@ int main() {
     cout << "Hello, World!" << endl;
     IntProblem p;
     cout << p.f(3);
-    ProblemSolver<IntResult, IntResult> solver(p, 10);
+    ProblemSolver<IntParam, IntResult> solver(p, 10);
     solver.process();
 
     return 0;

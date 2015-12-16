@@ -4,6 +4,9 @@
 
 using namespace std;
 
+template
+class ProblemSolver<double, double>;
+
 template<class TParam, class TResult>
 TResult ProblemSolver<TParam, TResult>::process() {
     omp_set_num_threads(numThreads);
@@ -26,11 +29,23 @@ TResult ProblemSolver<TParam, TResult>::process() {
             else if (task->state == TaskState::AWAITING) {
                 //this node need's calculation or has to be divided
                 if (problem.testDivide(task->params)) {
-                    Task<TParam, TResult> task1 = taskContainer.createTask();
-                    Task<TParam, TResult> task2 = taskContainer.createTask();
+                    // divide task into smaller tasks and push to queue
+                    Task<TParam, TResult> *task1 = taskContainer.createTask();
+                    Task<TParam, TResult> *task2 = taskContainer.createTask();
 
-                    dividedParams = problem.divide()
+                    task1->state = TaskState::AWAITING;
+                    task2->state = TaskState::AWAITING;
 
+                    task1->parent = task;
+                    task1->brother = task2;
+                    task2->brother = task1;
+
+                    const DividedParams<TParam> &dividedParams = problem.divide(task->params);
+                    task1->params = dividedParams.param1;
+                    task2->params = dividedParams.param2;
+
+                    taskContainer.putIntoQueue(task1);
+                    taskContainer.putIntoQueue(task2);
                 }
                 else {
                     task->result = problem.compute(task->params); // calculate directly the result
@@ -38,7 +53,7 @@ TResult ProblemSolver<TParam, TResult>::process() {
                     taskContainer.putIntoQueue(task); // put task to be merged later
                 }
             }
-            else if (task->state == TaskState::COMPUTED and task->brother.state == TaskState::COMPUTED) {
+            else if (task->state == TaskState::COMPUTED and task->brother->state == TaskState::COMPUTED) {
                 //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
             }
         }
@@ -47,18 +62,14 @@ TResult ProblemSolver<TParam, TResult>::process() {
     return finalResult;
 }
 
-
-template
-class ProblemSolver<double, double>;
-
 template<class TParams, class TResult>
-Task<TParams, TResult> TaskContainer::createTask() {
-    tasks.emplace_back(1);
-    return tasks.back();
+Task<TParams, TResult> *TaskContainer<TParams,TResult>::createTask() {
+    tasks.emplace_back();
+    return &tasks.back();
 }
 
 template<class TParams, class TResult>
-void TaskContainer::putIntoQueue(Task<TParams, TResult> *task) {
+void TaskContainer<TParams,TResult>::putIntoQueue(Task<TParams, TResult> *task) {
 #pragma omp critical (queue)
     {
         queue.push(task);
@@ -66,13 +77,15 @@ void TaskContainer::putIntoQueue(Task<TParams, TResult> *task) {
 }
 
 template<class TParams, class TResult>
-Task<TParams, TResult> *TaskContainer::pickFromQueue() {
+Task<TParams, TResult> *TaskContainer<TParams,TResult>::pickFromQueue() {
+    Task<TParams, TResult> *pTask;
 #pragma omp critical (queue)
     {
-        return queue.pop();
+        pTask = queue.pop();
     }
+    return pTask;
 }
-
-bool Task::isRootTask() {
+template<class TParams, class TResult>
+bool Task<TParams,TResult>::isRootTask() {
     return parent == nullptr;
 }

@@ -6,7 +6,7 @@
 
 
 template<class TParams>
-struct DividedData {
+struct DividedParams {
 public:
     TParams param1;
     TParams param2;
@@ -22,8 +22,8 @@ public:
     TParams params;
     TResult result;
     TaskState state;
-    Task<TParams, TResult> &parent; // if null and state==done - finish program
-    Task<TParams, TResult> &brother;
+    Task<TParams, TResult> *parent; // if null and state==done - finish program
+    Task<TParams, TResult> *brother;
 
     inline bool isRootTask();
 };
@@ -38,7 +38,7 @@ public:
 
     virtual TResult compute(TParams param) = 0;
 
-    virtual DividedData<TParams> divide(TParams a) = 0;
+    virtual DividedParams<TParams> divide(TParams a) = 0;
 };
 
 
@@ -50,7 +50,7 @@ private:
 public:
 
 
-    Task<TParams, TResult> createTask();
+    Task<TParams, TResult> *createTask();
 
     void putIntoQueue(Task<TParams, TResult> *task);
 
