@@ -24,13 +24,14 @@ public:
     virtual bool testDivide(IntParam param) {
 
 
-        return fabs(param.a - param.b) > 0.1 //range is to large
-               or ( // division error is too large
-                       compute(param)
-                       - compute(param.a, (param.a + param.middle()))
-                       - compute(param.middle(), param.b)
-                       > 0.2
-               );
+        return fabs(param.a - param.b) > 1 //range is to large
+//               or ( // division error is too large
+//                       compute(param)
+//                       - compute(param.a, (param.a + param.middle()))
+//                       - compute(param.middle(), param.b)
+//                       > 0.02
+//               );
+                ;
     }
 
     virtual IntResult merge(IntResult a, IntResult b) {
@@ -52,21 +53,26 @@ public:
     }
 
     IntResult f(IntResult x) {
-        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
+//        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
+//        return 5 * x * x;
+        return fabs(x-5);
     }
 
     IntResult compute(IntResult a, IntResult b) {
-        return (f(a) + f(b) * (b - a)) / 2;
+        IntResult delta = b - a;
+
+        IntResult fa = f(a);
+        IntResult fb = f(b);
+        return (fa + fb) / 2 * delta;
     }
 };
 
 
 int main() {
-    cout << "Hello, World!" << endl;
     IntProblem p;
-    cout << p.f(3);
-    ProblemSolver<IntParam, IntResult> solver(p, 10);
-    solver.process();
+    ProblemSolver<IntParam, IntResult> solver(p, 10, true);
+    cout << "\n THE FINAL RESULT: " << solver.process({0, 10});
+
 
     return 0;
 }

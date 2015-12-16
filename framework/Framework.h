@@ -2,6 +2,8 @@
 #define DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
 
 #include <deque>
+#include <string>
+
 #include "BlockingQueue.h"
 
 
@@ -61,17 +63,22 @@ public:
 
 template<class TParams, class TResult>
 class ProblemSolver {
-public:
+private:
     ProblemImpl<TParams, TResult> &problem;
     TaskContainer<TParams, TResult> taskContainer;
 
     int numThreads;
+    bool debug;
+protected:
+    void output(std::string str);
 
-    ProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads) : problem(problem),
-                                                                            taskContainer(),
-                                                                            numThreads(numThreads) { }
+public:
+    ProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads, bool debug) : problem(problem),
+                                                                                        taskContainer(),
+                                                                                        numThreads(numThreads),
+                                                                                        debug(debug) { }
 
-    TResult process();
+    TResult process(TParams params);
 };
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
