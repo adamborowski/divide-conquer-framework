@@ -24,7 +24,7 @@ public:
     virtual bool testDivide(IntParam param) {
 
 
-        return fabs(param.a - param.b) > 1 //range is to large
+        return fabs(param.a - param.b) > .2 //range is to large
 //               or ( // division error is too large
 //                       compute(param)
 //                       - compute(param.a, (param.a + param.middle()))
@@ -55,7 +55,7 @@ public:
     IntResult f(IntResult x) {
 //        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
 //        return 5 * x * x;
-        return fabs(x-5);
+        return fabs(x - 5);
     }
 
     IntResult compute(IntResult a, IntResult b) {
@@ -64,6 +64,14 @@ public:
         IntResult fa = f(a);
         IntResult fb = f(b);
         return (fa + fb) / 2 * delta;
+    }
+
+    virtual std::string toString(IntParam params) {
+        return "(" + to_string(params.a) + ", " + to_string(params.b) + ")";
+    }
+
+    virtual std::string toString(IntResult result) {
+        return to_string(result);
     }
 };
 

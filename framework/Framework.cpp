@@ -16,6 +16,7 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
     Task<TParams, TResult> *rootTask = taskContainer.createTask();
     rootTask->parent = nullptr;
     rootTask->brother = nullptr;
+    rootTask->isRootTask = true;
     rootTask->params = params;
     rootTask->state = TaskState::AWAITING;
     taskContainer.putIntoQueue(rootTask);
@@ -27,14 +28,27 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
 
         while (work) {
             //fixme: only for demonstration purposes - ensure proper log order
-#pragma omp critical
+            usleep(10000); // only for debug purposes
             {
-                Task<TParams, TResult> *task = taskContainer.pickFromQueue();
+                Task<TParams, TResult> *task;
 
-                string common = "got task: (" + to_string(task->params.a) + " " + to_string(task->params.b) + ") / ";
+                task = taskContainer.pickFromQueue();
 
 
-                if (task->isRootTask() and task->state == TaskState::COMPUTED) {
+                if (task == nullptr) {
+                    output("skip, no task!");
+                    continue;
+                }
+                if (task->isRootTask) {
+                    output("got root task!");
+                }
+
+                string common =
+                        "got task: (" + to_string(task->params.a) + " " + to_string(task->params.b) + ") / ";
+
+//                output(common);
+
+                if (task->isRootTask and task->state == TaskState::COMPUTED) {
                     output(common + "root task = " + to_string(task->result));
 
                     //this is the root node = we just have the final result
@@ -68,7 +82,6 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
                         taskContainer.putIntoQueue(task2);
                     }
                     else {
-                        usleep(10000); // only for debug purposes
                         task->result = problem.compute(task->params); // calculate directly the result
                         task->state = TaskState::COMPUTED; // change the state to "ready to merge"
                         output(common + "compute = ~" + to_string(task->result));
@@ -76,10 +89,12 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
 
                     }
                 }
-                else if (task->state == TaskState::COMPUTED and task->brother->state == TaskState::COMPUTED) {
+                else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
+                         task->brother->state == TaskState::COMPUTED) {
 
                     //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
                     Task<TParams, TResult> *parent = task->parent;
+                    output(common + "parent = " + (parent == nullptr ? "nullptr" : "instance"));
                     parent->result = problem.merge(task->result, task->brother->result);
                     output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
                            to_string(task->brother->result) + " = " + to_string(parent->result));
@@ -89,8 +104,8 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
                     //put parent into queue again
                     taskContainer.putIntoQueue(parent);
                 }
-                else if (task->state == TaskState::DONE) {
-                    //unlock queue by pushing dummies again
+                else {
+                    //todo investigate why this task must be re-enqueued
                     taskContainer.putIntoQueue(task);
                 }
             }
@@ -113,18 +128,37 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::createTask() {
 
 template<class TParams, class TResult>
 void TaskContainer<TParams, TResult>::putIntoQueue(Task<TParams, TResult> *task) {
-    queue.push(task);
+#pragma omp critical (queue_put)
+    {
+        queue.push(task);
+//        cout << "\n@" << omp_get_thread_num() << ": put into queue: " << problem->toString(task->params) <<
+//        " after: " << queue.size() << "";
+    }
 }
 
 template<class TParams, class TResult>
 Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
-    return queue.pop();
+    Task<TParams, TResult> *result = nullptr;
+#pragma omp critical (queue_pick)
+    {
+
+        if (!queue.empty()) {
+            result = queue.front();
+            queue.pop();
+//            cout << "\n@" << omp_get_thread_num() << ": picked from queue: " << problem->toString(result->params) <<
+//            " after: " << queue.size() << "";
+
+
+        }
+    }
+    return result;
 }
 
 template<class TParams, class TResult>
-bool Task<TParams, TResult>::isRootTask() {
-    return parent == nullptr;
+bool TaskContainer<TParams, TResult>::hasTask() {
+    return !queue.empty();
 }
+
 
 template<class TParams, class TResult>
 void ProblemSolver<TParams, TResult>::output(std::string str) {
@@ -133,3 +167,4 @@ void ProblemSolver<TParams, TResult>::output(std::string str) {
         cout << "\n#" << omp_get_thread_num() << ": " << str;
     }
 }
+

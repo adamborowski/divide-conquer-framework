@@ -23,6 +23,11 @@ public:
         return item;
     }
 
+    bool empty()
+    {
+        return queue_.empty();
+    }
+
     void pop(T& item)
     {
         std::unique_lock<std::mutex> mlock(mutex_);

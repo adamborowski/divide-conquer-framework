@@ -24,10 +24,10 @@ public:
     TParams params;
     TResult result;
     TaskState state;
-    Task<TParams, TResult> *parent; // if null and state==done - finish program
-    Task<TParams, TResult> *brother;
+    Task<TParams, TResult> *parent = nullptr; // if null and state==done - finish program
+    Task<TParams, TResult> *brother = nullptr;
 
-    inline bool isRootTask();
+    bool isRootTask = false;
 };
 
 
@@ -41,6 +41,10 @@ public:
     virtual TResult compute(TParams param) = 0;
 
     virtual DividedParams<TParams> divide(TParams a) = 0;
+
+    virtual std::string toString(TParams params) = 0;
+
+    virtual std::string toString(TResult result) = 0;
 };
 
 
@@ -48,7 +52,8 @@ template<class TParams, class TResult>
 class TaskContainer {
 private:
     std::deque<Task<TParams, TResult>> tasks;
-    BlockingQueue<Task<TParams, TResult> *> queue;
+    std::queue<Task<TParams, TResult> *> queue;
+    ProblemImpl<TParams, TResult> *problem;
 public:
 
 
@@ -58,7 +63,10 @@ public:
 
     Task<TParams, TResult> *pickFromQueue();
 
+    bool hasTask();
 
+
+    TaskContainer(ProblemImpl<TParams, TResult> &problem) : problem(&problem) { };
 };
 
 template<class TParams, class TResult>
@@ -69,12 +77,12 @@ private:
 
     int numThreads;
     bool debug;
-protected:
+public:
     void output(std::string str);
 
 public:
     ProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads, bool debug) : problem(problem),
-                                                                                        taskContainer(),
+                                                                                        taskContainer(problem),
                                                                                         numThreads(numThreads),
                                                                                         debug(debug) { }
 
