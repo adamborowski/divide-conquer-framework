@@ -3,35 +3,58 @@
 #include "framework/Framework.h"
 
 using namespace std;
-struct Param{
+
+struct IntParam {
     double a;
     double b;
+
+    double middle() {
+        return (a + b) / 2;
+    }
 };
-typedef double Result;
+
+typedef double IntResult;
 
 
-class IntProblem : public ProblemImpl<Param, Result> {
+class IntProblem : public ProblemImpl<IntParam, IntResult> {
 
 public:
-    virtual bool testDivide(Result a, Result b) {
-        return false;
+    virtual bool testDivide(IntParam param) {
+
+
+        return fabs(param.a - param.b) > 0.1 //range is to large
+               or ( // division error is too large
+                       compute(param)
+                       - compute(param.a, (param.a + param.middle()))
+                       - compute(param.middle(), param.b)
+                       > 0.2
+               );
     }
 
-    virtual Result merge(Result a, Result b) {
-        return 0;
+    virtual IntResult merge(IntResult a, IntResult b) {
+        return a + b;
     }
 
-    virtual Result compute(Result a, Result b) {
-        return 0;
+    virtual IntResult compute(IntParam param) {
+        return compute(param.a, param.b);
     }
 
-    virtual DividedData<Result> divide(Result a, Result b) {
-        DividedData<Result> d;
+
+    virtual DividedData<IntParam> divide(IntParam param) {
+        DividedData<IntParam> d;
+        d.param1.a = param.a;
+        d.param1.b = (param.a + param.b) / 2;
+        d.param2.a = d.param1.b;
+        d.param2.b = param.b;
         return d;
     }
 
-    Result f(Result x) {
+    IntResult f(IntResult x) {
         return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
+    }
+
+    IntResult compute(IntResult a, IntResult b) {
+        return (f(a) + f(b) * (b - a)) / 2;
     }
 };
 
@@ -40,7 +63,7 @@ int main() {
     cout << "Hello, World!" << endl;
     IntProblem p;
     cout << p.f(3);
-    ProblemSolver<Result, Result> solver(p, 10);
+    ProblemSolver<IntResult, IntResult> solver(p, 10);
     solver.process();
 
     return 0;

@@ -11,7 +11,6 @@ TResult ProblemSolver<TParam, TResult>::process() {
     bool work = true;
 #pragma omp parallel shared(work, finalResult)
     {
-        //todo shared variable = can we stop?
         //every thread iterates over common queue and processes each task
         cout << "\nThread" << omp_get_thread_num() << "started working";
 
@@ -26,8 +25,20 @@ TResult ProblemSolver<TParam, TResult>::process() {
             }
             else if (task->state == TaskState::AWAITING) {
                 //this node need's calculation or has to be divided
+                if (problem.testDivide(task->params)) {
+                    Task<TParam, TResult> task1 = taskContainer.createTask();
+                    Task<TParam, TResult> task2 = taskContainer.createTask();
+
+                    dividedParams = problem.divide()
+
+                }
+                else {
+                    task->result = problem.compute(task->params); // calculate directly the result
+                    task->state = TaskState::COMPUTED; // change the state to "ready to merge"
+                    taskContainer.putIntoQueue(task); // put task to be merged later
+                }
             }
-            else if (task->state == TaskState::COMPUTED and task->brother.state==TaskState::COMPUTED){
+            else if (task->state == TaskState::COMPUTED and task->brother.state == TaskState::COMPUTED) {
                 //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
             }
         }

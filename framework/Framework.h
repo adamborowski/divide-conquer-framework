@@ -38,7 +38,7 @@ public:
 
     virtual TResult compute(TParams param) = 0;
 
-    virtual DividedData<TParams> divide(TParams a, TParams b) = 0;
+    virtual DividedData<TParams> divide(TParams a) = 0;
 };
 
 
