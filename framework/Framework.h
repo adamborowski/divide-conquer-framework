@@ -1,37 +1,77 @@
 #ifndef DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
 #define DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H
 
-template<typename DataType>
+#include <deque>
+#include "BlockingQueue.h"
+
+
+template<class TParams>
 struct DividedData {
 public:
-    DataType a1;
-    DataType b1;
-    DataType a2;
-    DataType b2;
+    TParams param1;
+    TParams param2;
 };
 
-template<typename DataType, typename ResultType>
+enum class TaskState {
+    AWAITING, COMPUTED, DONE
+};
+
+template<class TParams, class TResult>
+class Task {
+public:
+    TParams params;
+    TResult result;
+    TaskState state;
+    Task<TParams, TResult> &parent; // if null and state==done - finish program
+    Task<TParams, TResult> &brother;
+
+    inline bool isRootTask();
+};
+
+
+template<class TParams, class TResult>
 class ProblemImpl {
 public:
-    virtual bool testDivide(DataType a, DataType b) = 0;
+    virtual bool testDivide(TParams param) = 0;
 
-    virtual ResultType merge(ResultType a, ResultType b) = 0;
+    virtual TResult merge(TResult a, TResult b) = 0;
 
-    virtual ResultType compute(DataType a, DataType b) = 0;
+    virtual TResult compute(TParams param) = 0;
 
-    virtual DividedData<DataType> divide(DataType a, DataType b) = 0;
+    virtual DividedData<TParams> divide(TParams a, TParams b) = 0;
 };
 
-template<typename DataType, typename ResultType>
+
+template<class TParams, class TResult>
+class TaskContainer {
+private:
+    std::deque<Task<TParams, TResult>> tasks;
+    BlockingQueue<Task<TParams, TResult> *> queue;
+public:
+
+
+    Task<TParams, TResult> createTask();
+
+    void putIntoQueue(Task<TParams, TResult> *task);
+
+    Task<TParams, TResult> *pickFromQueue();
+
+
+};
+
+template<class TParams, class TResult>
 class ProblemSolver {
 public:
-    ProblemImpl<DataType, ResultType> &problem;
+    ProblemImpl<TParams, TResult> &problem;
+    TaskContainer<TParams, TResult> taskContainer;
+
     int numThreads;
 
-    ProblemSolver(ProblemImpl<DataType, ResultType> &problem, int numThreads) : problem(problem),
-                                                                                numThreads(numThreads) { }
+    ProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads) : problem(problem),
+                                                                            taskContainer(),
+                                                                            numThreads(numThreads) { }
 
-    void start();
+    TResult process();
 };
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H

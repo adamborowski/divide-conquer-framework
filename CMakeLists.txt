@@ -7,5 +7,5 @@ if (APPLE)
     include_directories(/usr/local/Cellar/libiomp/20150701/include/libiomp)
 endif ()
 
-set(SOURCE_FILES main.cpp framework/Framework.cpp)
+set(SOURCE_FILES main.cpp framework/Framework.cpp framework/BlockingQueue.h)
 add_executable(divide_conquer_framework ${SOURCE_FILES})

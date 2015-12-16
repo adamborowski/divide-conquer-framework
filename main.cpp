@@ -3,30 +3,34 @@
 #include "framework/Framework.h"
 
 using namespace std;
-typedef double Arg;
+struct Param{
+    double a;
+    double b;
+};
+typedef double Result;
 
 
-class IntProblem : public ProblemImpl<Arg, Arg> {
+class IntProblem : public ProblemImpl<Param, Result> {
 
 public:
-    virtual bool testDivide(Arg a, Arg b) {
+    virtual bool testDivide(Result a, Result b) {
         return false;
     }
 
-    virtual Arg merge(Arg a, Arg b) {
+    virtual Result merge(Result a, Result b) {
         return 0;
     }
 
-    virtual Arg compute(Arg a, Arg b) {
+    virtual Result compute(Result a, Result b) {
         return 0;
     }
 
-    virtual DividedData<Arg> divide(Arg a, Arg b) {
-        DividedData<Arg> d;
+    virtual DividedData<Result> divide(Result a, Result b) {
+        DividedData<Result> d;
         return d;
     }
 
-    Arg f(Arg x) {
+    Result f(Result x) {
         return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
     }
 };
@@ -36,8 +40,8 @@ int main() {
     cout << "Hello, World!" << endl;
     IntProblem p;
     cout << p.f(3);
-    ProblemSolver<Arg, Arg> solver(p, 10);
-    solver.start();
+    ProblemSolver<Result, Result> solver(p, 10);
+    solver.process();
 
     return 0;
 }
