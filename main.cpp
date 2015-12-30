@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "framework/Framework.cpp"
+#include "framework/ProblemSolver.cpp"
 
 
 using namespace std;
@@ -22,16 +23,16 @@ class IntProblem : public ProblemImpl<IntParam, IntResult> {
 
 public:
     virtual bool testDivide(IntParam param) {
-
-
-        return fabs(param.a - param.b) > .2 //range is to large
-//               or ( // division error is too large
-//                       compute(param)
-//                       - compute(param.a, (param.a + param.middle()))
-//                       - compute(param.middle(), param.b)
-//                       > 0.02
-//               );
-                ;
+        double middle = param.middle();
+        IntResult big = compute(param);
+        IntResult small = compute(param.a, middle) + compute(middle, param.b);
+        double range = fabs(param.a - param.b);
+        IntResult error = big - small;
+        return
+                range > .1
+                or
+                error > 0.003
+        ;
     }
 
     virtual IntResult merge(IntResult a, IntResult b) {
@@ -53,9 +54,9 @@ public:
     }
 
     IntResult f(IntResult x) {
-//        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
+        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
 //        return 5 * x * x;
-        return fabs(x - 5);
+//        return fabs(x - 5);
     }
 
     IntResult compute(IntResult a, IntResult b) {
@@ -78,7 +79,7 @@ public:
 
 int main() {
     IntProblem p;
-    ProblemSolver<IntParam, IntResult> solver(p, 10, true);
+    ProblemSolver<IntParam, IntResult> solver(p, 100, true);
     cout << "\n THE FINAL RESULT: " << solver.process({0, 10});
 
 

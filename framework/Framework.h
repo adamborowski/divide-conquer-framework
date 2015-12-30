@@ -3,8 +3,8 @@
 
 #include <deque>
 #include <string>
-
-#include "BlockingQueue.h"
+#include <queue>
+using namespace std;
 
 
 template<class TParams>
