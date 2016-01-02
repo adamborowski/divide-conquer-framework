@@ -1,87 +1,56 @@
+#include "test/Tester.h"
+#include "test/Problem.h"
+#include "test/Timer.h"
+#include <string>
 #include <iostream>
-#include <math.h>
-
-#include "framework/Framework.cpp"
-#include "framework/ProblemSolver.cpp"
-
 
 using namespace std;
 
-struct IntParam {
-    double a;
-    double b;
-
-    double middle() {
-        return (a + b) / 2;
-    }
+struct Args {
+    bool debug = false;
+    bool baseOrOptimized = true;
+    int numThreads = 1;
+    int threadsPerQueue = 1;
+    int parallelFactor = 1;
 };
 
-typedef double IntResult;
+bool toBool(char *val) {
+    return *val == '1';
+}
 
+int toInt(char *val) {
+    return atoi(val);
+}
 
-class IntProblem : public ProblemImpl<IntParam, IntResult> {
+Args parseArguments(int argc, char **argv) {
+    Args args;
+    if (argc > 1)
+        args.debug = toBool(argv[1]);
+    if (argc > 2)
+        args.baseOrOptimized = toBool(argv[2]);
+    if (argc > 3)
+        args.numThreads = toInt(argv[3]);
+    if (argc > 4)
+        args.threadsPerQueue = toInt(argv[4]);
+    if (argc > 5)
+        args.parallelFactor = toInt(argv[5]);
+    return args;
+}
 
-public:
-    virtual bool testDivide(IntParam param) {
-        double middle = param.middle();
-        IntResult big = compute(param);
-        IntResult small = compute(param.a, middle) + compute(middle, param.b);
-        double range = fabs(param.a - param.b);
-        IntResult error = big - small;
-        return
-                range > .1
-                or
-                error > 0.003
-        ;
-    }
+/**
+ * usage
+ * program [base_or_optimized] [numThreads] [threadsPerQueue] [parallelFactor]
+ */
+int main(int argc, char **argv) {
+    Args config = parseArguments(argc, argv);
 
-    virtual IntResult merge(IntResult a, IntResult b) {
-        return a + b;
-    }
-
-    virtual IntResult compute(IntParam param) {
-        return compute(param.a, param.b);
-    }
-
-
-    virtual DividedParams<IntParam> divide(IntParam param) {
-        DividedParams<IntParam> d;
-        d.param1.a = param.a;
-        d.param1.b = (param.a + param.b) / 2;
-        d.param2.a = d.param1.b;
-        d.param2.b = param.b;
-        return d;
-    }
-
-    IntResult f(IntResult x) {
-        return sin(x + 2) * ((cos(3 * x - 2))) / 0.1 * x;
-//        return 5 * x * x;
-//        return fabs(x - 5);
-    }
-
-    IntResult compute(IntResult a, IntResult b) {
-        IntResult delta = b - a;
-
-        IntResult fa = f(a);
-        IntResult fb = f(b);
-        return (fa + fb) / 2 * delta;
-    }
-
-    virtual std::string toString(IntParam params) {
-        return "(" + to_string(params.a) + ", " + to_string(params.b) + ")";
-    }
-
-    virtual std::string toString(IntResult result) {
-        return to_string(result);
-    }
-};
-
-
-int main() {
     IntProblem p;
-    ProblemSolver<IntParam, IntResult> solver(p, 100, true);
-    cout << "\n THE FINAL RESULT: " << solver.process({0, 10});
+    ProblemSolver<IntParam, IntResult> solver(p, config.debug);
+    Timer timer;
+    timer.start();
+    IntResult d = solver.process({0, 100}, config.numThreads);
 
-
+    timer.stop();
+    cout << timer.getDurationString(); // us
     return 0;
 }

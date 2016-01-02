@@ -75,18 +75,17 @@ private:
     ProblemImpl<TParams, TResult> &problem;
     TaskContainer<TParams, TResult> taskContainer;
 
-    int numThreads;
     bool debug;
 public:
     void output(std::string str);
 
 public:
-    ProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads, bool debug) : problem(problem),
+    ProblemSolver(ProblemImpl<TParams, TResult> &problem,  bool debug) : problem(problem),
                                                                                         taskContainer(problem),
-                                                                                        numThreads(numThreads),
+
                                                                                         debug(debug) { }
 
-    TResult process(TParams params);
+    TResult process(TParams params,  int numThreads);
 };
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H

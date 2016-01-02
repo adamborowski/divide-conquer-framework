@@ -7,14 +7,16 @@ using namespace std;
 
 template<class TParams, class TResult>
 void ProblemSolver<TParams, TResult>::output(std::string str) {
+    if (debug) {
 #pragma omp critical (output)
-    {
-        cout << "\n#" << omp_get_thread_num() << ": " << str;
+        {
+            cout << "\n#" << omp_get_thread_num() << ": " << str;
+        }
     }
 }
 
 template<class TParams, class TResult>
-TResult ProblemSolver<TParams, TResult>::process(TParams params) {
+TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads) {
     omp_set_num_threads(numThreads);
     TResult finalResult;
     bool work = true;
@@ -28,14 +30,16 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->state = TaskState::AWAITING;
     taskContainer.putIntoQueue(rootTask);
 
+
 #pragma omp parallel shared(work, finalResult)
     {
         //every thread iterates over common queue and processes each task
         output("started working");
+//        cout << "\nnum threads: " + to_string(omp_get_num_threads()) + " / " + to_string(numThreads);
 
         while (work) {
             //fixme: only for demonstration purposes - ensure proper log order
-            usleep(10000); // only for debug purposes
+            //usleep(10000); // only for debug purposes
             {
                 Task<TParams, TResult> *task;
 
