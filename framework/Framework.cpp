@@ -46,3 +46,7 @@ template<class TParams, class TResult>
 TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     return nullptr;
 }
+template<class TParams, class TResult>
+ThreadStats &AbstractProblemSolver<TParams, TResult>::getThreadStats() {
+    return this->threadStats;
+}

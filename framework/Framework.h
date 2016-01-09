@@ -4,6 +4,7 @@
 #include <deque>
 #include <string>
 #include <queue>
+#include "ThreadStats.h"
 
 using namespace std;
 
@@ -73,12 +74,16 @@ template<class TParams, class TResult>
 class AbstractProblemSolver {
 protected:
     ProblemImpl<TParams, TResult> &problem;
+    int numThreads;
+    ThreadStats threadStats;
 public:
     bool debug;
 
-    AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem) : problem(problem) { }
+    AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads) : problem(problem), numThreads(numThreads), threadStats(numThreads) { }
 
     void output(std::string str);
+
+    ThreadStats& getThreadStats();
 
     virtual TResult process(TParams params) = 0;
 };
@@ -87,15 +92,14 @@ template<class TParams, class TResult>
 class BaseProblemSolver : public AbstractProblemSolver<TParams, TResult> {
 private:
     TaskContainer<TParams, TResult> taskContainer;
-    int numThreads;
+
 public:
     BaseProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
             int numThreads
     ) :
-            AbstractProblemSolver<TParams, TResult>(problem),
-            taskContainer(problem),
-            numThreads(numThreads) { }
+            AbstractProblemSolver<TParams, TResult>(problem, numThreads),
+            taskContainer(problem) { }
 
     virtual TResult process(TParams params);
 };
@@ -113,7 +117,7 @@ public:
             int threadsPerQueue,
             int parallelFactor
     ) :
-            AbstractProblemSolver<TParams, TResult>(problem),
+            AbstractProblemSolver<TParams, TResult>(problem, numThreads),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
             parallelFactor(parallelFactor) { }

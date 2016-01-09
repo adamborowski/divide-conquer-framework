@@ -1,3 +1,4 @@
+#include <boost/program_options.hpp>
 #include <iostream>
 #include "test/Problem.h"
 #include "test/Timer.h"
@@ -5,33 +6,27 @@
 using namespace std;
 
 struct Args {
-    bool debug = false;
-    bool baseOrOptimized = true;
-    int numThreads = 1;
-    int threadsPerQueue = 1;
-    int parallelFactor = 1;
+    bool debug;
+    bool optimized;
+    int numThreads;
+    int threadsPerQueue;
+    int parallelFactor;
 };
 
-bool toBool(char *val) {
-    return *val == '1';
-}
 
-int toInt(char *val) {
-    return atoi(val);
-}
-
-Args parseArguments(int argc, char **argv) {
+Args parseArguments(int argc, const char *const *argv) {
     Args args;
-    if (argc > 1)
-        args.debug = toBool(argv[1]);
-    if (argc > 2)
-        args.baseOrOptimized = toBool(argv[2]);
-    if (argc > 3)
-        args.numThreads = toInt(argv[3]);
-    if (argc > 4)
-        args.threadsPerQueue = toInt(argv[4]);
-    if (argc > 5)
-        args.parallelFactor = toInt(argv[5]);
+    namespace po = boost::program_options;
+    po::options_description desc("Divide & Conquer Framework demo");
+    desc.add_options()
+            ("debug,v", po::bool_switch(&args.debug)->default_value(false), "Debug mode")
+            ("optimized,o", po::bool_switch(&args.optimized)->default_value(false), "Run optimized version")
+            ("numThreads,n", po::value<int>(&args.numThreads)->default_value(1), "Number of threads");
+            ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1), "Number of threads per queue for optimized version");
+            ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread.");
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
     return args;
 }
 
@@ -44,7 +39,7 @@ int main(int argc, char **argv) {
 
     IntProblem p;
     AbstractProblemSolver<IntParam, IntResult> *solver;
-    if (config.baseOrOptimized) {
+    if (!config.optimized) {
         solver = new BaseProblemSolver<IntParam, IntResult>(p, config.numThreads);
     }
     else {
@@ -57,10 +52,16 @@ int main(int argc, char **argv) {
 
     // execution
     Timer timer;
+    ThreadStats &threadStats = solver->getThreadStats();
     timer.start();
     IntResult d = solver->process({0, 100});
     timer.stop();
-    cout << timer.getDurationString() << endl; // us
+
+    threadStats.calculate();
+    cout << endl
+    << timer.getDurationString() << endl
+    << threadStats.getAverage() << endl
+    << threadStats.getStdDeviation() << endl;
 
     // cleanup
     delete solver;

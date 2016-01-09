@@ -8,7 +8,7 @@ using namespace std;
 
 template<class TParams, class TResult>
 TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
-    omp_set_num_threads(numThreads);
+    omp_set_num_threads(this->numThreads);
     TResult finalResult;
     bool work = true;
 
@@ -20,7 +20,7 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->params = params;
     rootTask->state = TaskState::AWAITING;
     taskContainer.putIntoQueue(rootTask);
-    ThreadStats threadStats(numThreads);
+    ThreadStats &threadStats = this->threadStats;
 
 
 #pragma omp parallel shared(work, finalResult, threadStats)
@@ -116,7 +116,5 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
         }
 
     }
-    threadStats.calculate();
-    std::cout << endl <<"average task/thread: "<< threadStats.getAverage() << " σ: " << threadStats.getStdDeviation() << endl;
     return finalResult;
 }
