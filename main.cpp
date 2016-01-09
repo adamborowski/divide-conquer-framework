@@ -1,8 +1,5 @@
-#include "test/Tester.h"
 #include "test/Problem.h"
 #include "test/Timer.h"
-#include <string>
-#include <iostream>
 
 using namespace std;
 
@@ -45,12 +42,26 @@ int main(int argc, char **argv) {
     Args config = parseArguments(argc, argv);
 
     IntProblem p;
-    ProblemSolver<IntParam, IntResult> solver(p, config.debug);
+    AbstractProblemSolver<IntParam, IntResult> *solver;
+    if (config.baseOrOptimized) {
+        solver = new BaseProblemSolver<IntParam, IntResult>(p, config.numThreads);
+    }
+    else {
+//        solver = new OptimizedProblemSolver<IntParam, IntResult> (p, config.numThreads);
+    }
+
+    // common config
+    solver->debug = config.debug;
+
+
+    // execution
     Timer timer;
     timer.start();
-    IntResult d = solver.process({0, 100}, config.numThreads);
-
+    IntResult d = solver->process({0, 100});
     timer.stop();
-    cout << timer.getDurationString(); // us
+    cout << timer.getDurationString() << endl; // us
+
+    // cleanup
+    delete solver;
     return 0;
 }

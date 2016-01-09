@@ -63,29 +63,60 @@ public:
 
     Task<TParams, TResult> *pickFromQueue();
 
-    bool hasTask();
-
 
     TaskContainer(ProblemImpl<TParams, TResult> &problem) : problem(&problem) { };
 };
 
-template<class TParams, class TResult>
-class ProblemSolver {
-private:
-    ProblemImpl<TParams, TResult> &problem;
-    TaskContainer<TParams, TResult> taskContainer;
 
-    bool debug;
+template<class TParams, class TResult>
+class AbstractProblemSolver {
+protected:
+    ProblemImpl<TParams, TResult> &problem;
 public:
+    bool debug;
+    AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem) : problem(problem) { }
+
     void output(std::string str);
 
+    virtual TResult process(TParams params) = 0;
+};
+
+template<class TParams, class TResult>
+class BaseProblemSolver : public AbstractProblemSolver<TParams,TResult> {
+private:
+    TaskContainer<TParams, TResult> taskContainer;
+    int numThreads;
 public:
-    ProblemSolver(ProblemImpl<TParams, TResult> &problem,  bool debug) : problem(problem),
-                                                                                        taskContainer(problem),
+    BaseProblemSolver(
+            ProblemImpl<TParams, TResult> &problem,
+            int numThreads
+    ) :
+            AbstractProblemSolver<TParams, TResult>(problem),
+            taskContainer(problem),
+            numThreads(numThreads) { }
 
-                                                                                        debug(debug) { }
+    virtual TResult process(TParams params);
+};
 
-    TResult process(TParams params,  int numThreads);
+template<class TParams, class TResult>
+class OptimizedProblemSolver : public AbstractProblemSolver<TParams,TResult> {
+private:
+    int numThreads;
+    int threadsPerQueue;
+    int parallelFactor;
+public:
+    OptimizedProblemSolver(
+            ProblemImpl<TParams, TResult> &problem,
+            int numThreads,
+            int threadsPerQueue,
+            int parallelFactor
+    ) :
+            AbstractProblemSolver<TParams,TResult>(problem),
+            numThreads(numThreads),
+            threadsPerQueue(threadsPerQueue),
+            parallelFactor(parallelFactor) { }
+
+    virtual TResult process(TParams params);
 };
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H

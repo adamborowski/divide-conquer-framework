@@ -43,6 +43,6 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
 }
 
 template<class TParams, class TResult>
-bool TaskContainer<TParams, TResult>::hasTask() {
-    return !queue.empty();
+TResult OptimizedProblemSolver<TParams,TResult>::process(TParams params) {
+    return nullptr;
 }

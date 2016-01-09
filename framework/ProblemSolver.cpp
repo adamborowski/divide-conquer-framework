@@ -6,7 +6,7 @@
 using namespace std;
 
 template<class TParams, class TResult>
-void ProblemSolver<TParams, TResult>::output(std::string str) {
+void AbstractProblemSolver<TParams, TResult>::output(std::string str) {
     if (debug) {
 #pragma omp critical (output)
         {
@@ -16,7 +16,7 @@ void ProblemSolver<TParams, TResult>::output(std::string str) {
 }
 
 template<class TParams, class TResult>
-TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads) {
+TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
     omp_set_num_threads(numThreads);
     TResult finalResult;
     bool work = true;
@@ -34,7 +34,7 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
 #pragma omp parallel shared(work, finalResult)
     {
         //every thread iterates over common queue and processes each task
-        output("started working");
+        this->output("started working");
 //        cout << "\nnum threads: " + to_string(omp_get_num_threads()) + " / " + to_string(numThreads);
 
         while (work) {
@@ -47,11 +47,11 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
 
 
                 if (task == nullptr) {
-                    output("skip, no task!");
+                    this->output("skip, no task!");
                     continue;
                 }
                 if (task->isRootTask) {
-                    output("got root task!");
+                    this->output("got root task!");
                 }
 
                 string common =
@@ -60,7 +60,7 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
 //                output(common);
 
                 if (task->isRootTask and task->state == TaskState::COMPUTED) {
-                    output(common + "root task = " + to_string(task->result));
+                    this->output(common + "root task = " + to_string(task->result));
 
                     //this is the root node = we just have the final result
                     work = false;
@@ -72,8 +72,8 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
                 else if (task->state == TaskState::AWAITING) {
 
                     //this node need's calculation or has to be divided
-                    if (problem.testDivide(task->params)) {
-                        output(common + "divide");
+                    if (this->problem.testDivide(task->params)) {
+                        this->output(common + "divide");
                         // divide task into smaller tasks and push to queue
                         Task<TParams, TResult> *task1 = taskContainer.createTask();
                         Task<TParams, TResult> *task2 = taskContainer.createTask();
@@ -85,7 +85,7 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
                         task1->brother = task2;
                         task2->brother = task1;
 
-                        const DividedParams<TParams> &dividedParams = problem.divide(task->params);
+                        const DividedParams<TParams> &dividedParams = this->problem.divide(task->params);
                         task1->params = dividedParams.param1;
                         task2->params = dividedParams.param2;
 
@@ -93,9 +93,9 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
                         taskContainer.putIntoQueue(task2);
                     }
                     else {
-                        task->result = problem.compute(task->params); // calculate directly the result
+                        task->result = this->problem.compute(task->params); // calculate directly the result
                         task->state = TaskState::COMPUTED; // change the state to "ready to merge"
-                        output(common + "compute = ~" + to_string(task->result));
+                        this->output(common + "compute = ~" + to_string(task->result));
                         taskContainer.putIntoQueue(task); // put task to be merged later
 
                     }
@@ -105,9 +105,9 @@ TResult ProblemSolver<TParams, TResult>::process(TParams params, int numThreads)
 
                     //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
                     Task<TParams, TResult> *parent = task->parent;
-                    output(common + "parent = " + (parent == nullptr ? "nullptr" : "instance"));
-                    parent->result = problem.merge(task->result, task->brother->result);
-                    output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
+                    this->output(common + "parent = " + (parent == nullptr ? "nullptr" : "instance"));
+                    parent->result = this->problem.merge(task->result, task->brother->result);
+                    this->output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
                            to_string(task->brother->result) + " = " + to_string(parent->result));
                     parent->state = TaskState::COMPUTED;
                     task->state = TaskState::DONE;
