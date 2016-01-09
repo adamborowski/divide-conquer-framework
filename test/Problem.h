@@ -1,10 +1,12 @@
 #ifndef PROBLEM_H
 #define PROBLEM_H
+
 #include <math.h>
 #include "../framework/Framework.h"
 #include "../framework/Framework.cpp"
 #include "../framework/AbstractProblemSolver.cpp"
 #include "../framework/BaseProblemSolver.cpp"
+
 struct IntParam {
     double a;
     double b;
