@@ -4,6 +4,7 @@
 #include <deque>
 #include <string>
 #include <queue>
+
 using namespace std;
 
 
@@ -74,6 +75,7 @@ protected:
     ProblemImpl<TParams, TResult> &problem;
 public:
     bool debug;
+
     AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem) : problem(problem) { }
 
     void output(std::string str);
@@ -82,7 +84,7 @@ public:
 };
 
 template<class TParams, class TResult>
-class BaseProblemSolver : public AbstractProblemSolver<TParams,TResult> {
+class BaseProblemSolver : public AbstractProblemSolver<TParams, TResult> {
 private:
     TaskContainer<TParams, TResult> taskContainer;
     int numThreads;
@@ -99,7 +101,7 @@ public:
 };
 
 template<class TParams, class TResult>
-class OptimizedProblemSolver : public AbstractProblemSolver<TParams,TResult> {
+class OptimizedProblemSolver : public AbstractProblemSolver<TParams, TResult> {
 private:
     int numThreads;
     int threadsPerQueue;
@@ -111,12 +113,13 @@ public:
             int threadsPerQueue,
             int parallelFactor
     ) :
-            AbstractProblemSolver<TParams,TResult>(problem),
+            AbstractProblemSolver<TParams, TResult>(problem),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
             parallelFactor(parallelFactor) { }
 
     virtual TResult process(TParams params);
 };
+
 
 #endif //DIVIDE_CONQUER_FRAMEWORK_FRAMEWORK_H

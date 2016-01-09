@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Timer.h"
 
 Timer::Timer() : isMeasuring(false) {
@@ -34,35 +35,4 @@ string Timer::getDurationString() {
     return to_string(micro.count());
 }
 
-void AverageTimer::reset() {
-    numTimes = 0;
-    totalDuration = clock::duration::zero();
-}
 
-int AverageTimer::getNumTimes() {
-    return numTimes;
-}
-
-void AverageTimer::start() {
-    timer.start();
-}
-
-void AverageTimer::stop() {
-    timer.stop();
-    totalDuration += timer.getDuration();
-    numTimes++;
-
-}
-
-AverageTimer::clock::duration AverageTimer::getAverageDuration() {
-    return totalDuration / numTimes;
-}
-
-string AverageTimer::getAverageDurationString() {
-    auto micro = chrono::duration_cast<chrono::microseconds>(getAverageDuration());
-    return to_string(micro.count()) + " us";
-}
-
-AverageTimer::AverageTimer() : numTimes(0), totalDuration(clock::duration::zero()) {
-
-}

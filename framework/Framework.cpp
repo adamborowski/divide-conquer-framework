@@ -1,6 +1,6 @@
 #include "Framework.h"
-using namespace std;
 
+using namespace std;
 
 
 template<class TParams, class TResult>
@@ -43,6 +43,6 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
 }
 
 template<class TParams, class TResult>
-TResult OptimizedProblemSolver<TParams,TResult>::process(TParams params) {
+TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     return nullptr;
 }
