@@ -6,7 +6,7 @@
 using namespace std;
 
 template<class TParams, class TResult>
-TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
+TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     omp_set_num_threads(this->numThreads);
     TResult finalResult;
     bool work = true;

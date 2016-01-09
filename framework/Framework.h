@@ -4,6 +4,7 @@
 #include <deque>
 #include <string>
 #include <queue>
+#include <omp.h>
 #include "ThreadStats.h"
 
 using namespace std;
@@ -79,11 +80,13 @@ protected:
 public:
     bool debug;
 
-    AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads) : problem(problem), numThreads(numThreads), threadStats(numThreads) { }
+    AbstractProblemSolver(ProblemImpl<TParams, TResult> &problem, int numThreads) : problem(problem),
+                                                                                    numThreads(numThreads),
+                                                                                    threadStats(numThreads) { }
 
     void output(std::string str);
 
-    ThreadStats& getThreadStats();
+    ThreadStats &getThreadStats();
 
     virtual TResult process(TParams params) = 0;
 };
@@ -110,6 +113,7 @@ private:
     int numThreads;
     int threadsPerQueue;
     int parallelFactor;
+
 public:
     OptimizedProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
