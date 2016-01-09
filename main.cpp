@@ -1,3 +1,4 @@
+#include <iostream>
 #include "test/Problem.h"
 #include "test/Timer.h"
 
