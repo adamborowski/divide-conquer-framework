@@ -1,6 +1,7 @@
 #include "Framework.h"
 #include <omp.h>
 #include <iostream>
+#include <unistd.h>
 
 
 using namespace std;
@@ -22,7 +23,7 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
     ThreadStats &threadStats = this->threadStats;
 
 
-#pragma omp parallel shared(work, finalResult, threadStats)
+#pragma omp parallel
     {
         const int threadId = omp_get_thread_num();
 
@@ -38,15 +39,23 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
 
             if (task == nullptr) {
                 this->output("skip, no task!");
+                usleep(100000);
                 continue;
             }
             else {
                 threadStats.tick(threadId);
             }
+            if (task->state == TaskState::DONE) {
+                //we assume that is the second node from merge
+                continue;
+            }
+            if (task->state == TaskState::DEAD) {
+                //we assume that there shouldn't be any DEAD task
+                throw "found dead task in a queue";
+            }
             if (task->isRootTask) {
                 this->output("got root task!");
             }
-
             string common =
                     "got task: (" + to_string(task->params.a) + " " + to_string(task->params.b) + ") / ";
 
@@ -58,9 +67,7 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
                 //this is the root node = we just have the final result
                 work = false;
                 finalResult = task->result;
-                //push dummy task to unlock the queue
-                task->state = TaskState::DONE;
-                taskContainer.putIntoQueue(task);
+                task->state = TaskState::DEAD;
             }
             else if (task->state == TaskState::AWAITING) {
 
@@ -103,8 +110,8 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
                 this->output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
                              to_string(task->brother->result) + " = " + to_string(parent->result));
                 parent->state = TaskState::COMPUTED;
-                task->state = TaskState::DONE;
-                task->brother->state = TaskState::DONE;
+                task->state = TaskState::DEAD; // we know that task doesn't exist in queue so it will be always dead
+                task->brother->state = TaskState::DONE; // we don't know if brother is in queue
                 //put parent into queue again
                 taskContainer.putIntoQueue(parent);
             }

@@ -6,6 +6,7 @@
 #include <queue>
 #include <omp.h>
 #include "ThreadStats.h"
+#include "OmpLock.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ public:
 };
 
 enum class TaskState {
-    AWAITING, COMPUTED, DONE
+    AWAITING, COMPUTED, DONE, DEAD //DEAD is also DONE and we are sure that it not exists int the queue
 };
 
 template<class TParams, class TResult>
@@ -31,6 +32,8 @@ public:
     Task<TParams, TResult> *brother = nullptr;
 
     bool isRootTask = false;
+
+    OmpLock computations;
 };
 
 
@@ -66,6 +69,9 @@ public:
 
     Task<TParams, TResult> *pickFromQueue();
 
+    unsigned long getQueueSize(){
+        return queue.size();
+    }
 
     TaskContainer(ProblemImpl<TParams, TResult> &problem) : problem(&problem) { };
 };
@@ -113,7 +119,7 @@ private:
     int numThreads;
     int threadsPerQueue;
     int parallelFactor;
-
+    TaskContainer<TParams, TResult> taskContainer;
 public:
     OptimizedProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
@@ -124,6 +130,7 @@ public:
             AbstractProblemSolver<TParams, TResult>(problem, numThreads),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
+            taskContainer(problem),
             parallelFactor(parallelFactor) { }
 
     virtual TResult process(TParams params);

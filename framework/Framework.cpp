@@ -10,15 +10,17 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::createTask() {
     {
         tasks.emplace_back();
         pTask = &tasks.back();
+        pTask->computations.lock();
     }
     return pTask;
 }
 
 template<class TParams, class TResult>
 void TaskContainer<TParams, TResult>::putIntoQueue(Task<TParams, TResult> *task) {
-#pragma omp critical (queue_put)
+#pragma omp critical (queue)
     {
         queue.push(task);
+        task->computations.unlock();
 //        cout << "\n@" << omp_get_thread_num() << ": put into queue: " << problem->toString(task->params) <<
 //        " after: " << queue.size() << "";
     }
@@ -27,12 +29,13 @@ void TaskContainer<TParams, TResult>::putIntoQueue(Task<TParams, TResult> *task)
 template<class TParams, class TResult>
 Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
     Task<TParams, TResult> *result = nullptr;
-#pragma omp critical (queue_pick)
+#pragma omp critical (queue)
     {
 
         if (!queue.empty()) {
             result = queue.front();
-            queue.pop();
+            queue.pop(); // todo lockuj się na tasku ale najpierw zwolnij dostęp do kolejki
+            result->computations.lock();
 //            cout << "\n@" << omp_get_thread_num() << ": picked from queue: " << problem->toString(result->params) <<
 //            " after: " << queue.size() << "";
 
@@ -42,10 +45,6 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
     return result;
 }
 
-template<class TParams, class TResult>
-TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
-    return nullptr;
-}
 template<class TParams, class TResult>
 ThreadStats &AbstractProblemSolver<TParams, TResult>::getThreadStats() {
     return this->threadStats;

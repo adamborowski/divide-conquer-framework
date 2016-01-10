@@ -6,6 +6,7 @@
 #include "../framework/Framework.cpp"
 #include "../framework/AbstractProblemSolver.cpp"
 #include "../framework/BaseProblemSolver.cpp"
+#include "../framework/OptimizedProblemSolver.cpp"
 
 struct IntParam {
     double a;
