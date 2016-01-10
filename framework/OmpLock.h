@@ -9,12 +9,13 @@
 
 class OmpLock {
     omp_lock_t _lock;
-    bool owner = false;
+    int owner = false;
 public:
     OmpLock();
 
     ~OmpLock();
 
+    bool isLocked();
     void lock();
 
     void unlock();

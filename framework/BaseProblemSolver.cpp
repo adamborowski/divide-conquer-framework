@@ -29,7 +29,6 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
 
         //every thread iterates over common queue and processes each task
         this->output("started working");
-//        cout << "\nnum threads: " + to_string(omp_get_num_threads()) + " / " + to_string(numThreads);
 
         while (work) {
             Task<TParams, TResult> *task;
@@ -45,21 +44,18 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
             else {
                 threadStats.tick(threadId);
             }
-            if (task->state == TaskState::DONE) {
+            task->computations.lock();
+            if (task->state == TaskState::DONE || task->state == TaskState::DEAD) {
                 //we assume that is the second node from merge
+                task->state = TaskState::DEAD;
+                task->computations.unlock();
                 continue;
-            }
-            if (task->state == TaskState::DEAD) {
-                //we assume that there shouldn't be any DEAD task
-                throw "found dead task in a queue";
             }
             if (task->isRootTask) {
                 this->output("got root task!");
             }
             string common =
                     "got task: (" + to_string(task->params.a) + " " + to_string(task->params.b) + ") / ";
-
-//                output(common);
 
             if (task->isRootTask and task->state == TaskState::COMPUTED) {
                 this->output(common + "root task = " + to_string(task->result));
@@ -82,6 +78,7 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
                     task2->state = TaskState::AWAITING;
 
                     task1->parent = task;
+                    task2->parent = task;
                     task1->brother = task2;
                     task2->brother = task1;
 
@@ -97,7 +94,6 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
                     task->state = TaskState::COMPUTED; // change the state to "ready to merge"
                     this->output(common + "compute = ~" + to_string(task->result));
                     taskContainer.putIntoQueue(task); // put task to be merged later
-
                 }
             }
             else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
@@ -115,10 +111,20 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
                 //put parent into queue again
                 taskContainer.putIntoQueue(parent);
             }
-            else {
-                //todo investigate why this task must be re-enqueued
-                taskContainer.putIntoQueue(task);
+            else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
+                     task->brother->state == TaskState::AWAITING) {
+                //sytuacja, w której nie mamy jeszcze drugiego brata gotowego, zatem nic nie róbmy
             }
+            else if (task->state == TaskState::DONE) {
+                //sytuacja, w której z kolejki przyszedł węzeł, który został zmergowany przez brata
+            }
+            else {
+//                int a = 0;
+//#pragma omp critical(output)
+//                cout<<"invalid task picked from queue"<<endl;
+////                throw "invalid task picked from queue";
+            }
+            task->computations.unlock();
         }
 
     }

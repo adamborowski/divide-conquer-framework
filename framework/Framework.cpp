@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Framework.h"
 
 using namespace std;
@@ -10,7 +11,6 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::createTask() {
     {
         tasks.emplace_back();
         pTask = &tasks.back();
-        pTask->computations.lock();
     }
     return pTask;
 }
@@ -20,7 +20,6 @@ void TaskContainer<TParams, TResult>::putIntoQueue(Task<TParams, TResult> *task)
 #pragma omp critical (queue)
     {
         queue.push(task);
-        task->computations.unlock();
 //        cout << "\n@" << omp_get_thread_num() << ": put into queue: " << problem->toString(task->params) <<
 //        " after: " << queue.size() << "";
     }
@@ -34,8 +33,7 @@ Task<TParams, TResult> *TaskContainer<TParams, TResult>::pickFromQueue() {
 
         if (!queue.empty()) {
             result = queue.front();
-            queue.pop(); // todo lockuj się na tasku ale najpierw zwolnij dostęp do kolejki
-            result->computations.lock();
+            queue.pop();
 //            cout << "\n@" << omp_get_thread_num() << ": picked from queue: " << problem->toString(result->params) <<
 //            " after: " << queue.size() << "";
 

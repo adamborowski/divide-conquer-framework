@@ -1,7 +1,8 @@
 #include "OmpLock.h"
+#include <omp.h>
 
 OmpLock::OmpLock() {
-    owner = false;
+    owner = -1;
     omp_init_lock(&_lock);
 }
 
@@ -11,15 +12,22 @@ OmpLock::~OmpLock() {
 
 void OmpLock::lock() {
     omp_set_lock(&_lock);
-    owner = true;
+    owner = omp_get_thread_num();
 }
 
 void OmpLock::unlock() {
-    if (owner) {
-        owner = false;
+    if (owner == omp_get_thread_num()) {
+        owner = -1;
         omp_unset_lock(&_lock);
     }
-    else {
-        throw "cannot unlock from another thread or lock is free";
+    else if (owner == -1) {
+        throw "cannot unlock: lock is free";
     }
+    else {
+        throw "cannot unlock from another thread";
+    }
+}
+
+bool OmpLock::isLocked() {
+    return owner >= 0;
 }
