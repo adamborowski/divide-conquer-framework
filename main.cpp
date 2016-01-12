@@ -45,11 +45,16 @@ Args parseArguments(int argc, const char *const *argv) {
             ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1),
              "Number of threads per queue for optimized version")
             ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1000),
-             "Lock free factory chunk size");
+             "Lock free factory chunk size")
+            ("help,h", "produce help message");
     ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread.");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
+    if (vm.count("help")) {
+        cout << desc << "\n";
+        exit (0);
+    }
     return args;
 }
 
