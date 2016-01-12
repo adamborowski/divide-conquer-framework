@@ -3,6 +3,8 @@
 #include <iostream>
 #include "ThreadUnsafeLockFreeFactory.h"
 #include "ThreadUnsafeLockFreeFactory.cpp"
+#include "SharedQueue.h"
+#include "SharedQueue.cpp"
 #include <unistd.h>
 
 using namespace std;
@@ -35,6 +37,7 @@ public:
 template<class TParams, class TResult>
 TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     ThreadSafeTaskFactory<TParams, TResult> taskFactory(this->numThreads, chunkSize);
+    SharedQueue<Task<TParams, TResult> *> queue(initialQueueSize);
 
     omp_set_num_threads(this->numThreads);
     TResult finalResult;
@@ -47,7 +50,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->isRootTask = true;
     rootTask->params = params;
     rootTask->state = TaskState::AWAITING;
-    taskContainer.putIntoQueue(rootTask);
+    queue.put(rootTask);
     ThreadStats &threadStats = this->threadStats;
 
 #pragma omp parallel
@@ -57,10 +60,11 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
         //every thread iterates over common queue and processes each task
         this->output("started working");
         Task<TParams, TResult> *task;
+        bool taskPicked;
         while (work) {
-            task = taskContainer.pickFromQueue();
+            taskPicked = queue.pick(&task);
 
-            if (task == nullptr) {
+            if (!taskPicked) {
                 this->output("skip, no task!");
                 usleep(100000);
                 continue;
@@ -108,14 +112,14 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                     const DividedParams<TParams> &dividedParams = this->problem.divide(task->params);
                     task1->params = dividedParams.param1;
                     task2->params = dividedParams.param2;
-                    taskContainer.putIntoQueue(task1);
-                    taskContainer.putIntoQueue(task2);
+                    queue.put(task1);
+                    queue.put(task2);
                 }
                 else {
                     task->result = this->problem.compute(task->params); // calculate directly the result
                     task->state = TaskState::COMPUTED; // change the state to "ready to merge"
                     this->output(common + "compute = ~" + to_string(task->result));
-                    taskContainer.putIntoQueue(task); // put task to be merged later
+                    queue.put(task); // put task to be merged later
 
                 }
             }
@@ -131,7 +135,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                 task->state = TaskState::DEAD; // we know that task doesn't exist in queue so it will be always dead
                 task->brother->state = TaskState::DONE; // we don't know if brother is in queue
                 //put parent into queue again
-                taskContainer.putIntoQueue(parent);
+                queue.put(parent);
             }
             else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
                      task->brother->state == TaskState::AWAITING) {
@@ -146,6 +150,6 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
         }
 
     }
-    this->output(to_string(taskFactory.getNumCreatedTasks())+" tasks created");
+    this->output(to_string(taskFactory.getNumCreatedTasks()) + " tasks created");
     return finalResult;
 }

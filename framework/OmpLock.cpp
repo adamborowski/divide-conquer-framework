@@ -17,8 +17,8 @@ void OmpLock::lock() {
 void OmpLock::unlock() {
     if (owner == omp_get_thread_num()) {
         owner = -1;
-        omp_unset_lock(&_lock);
-    }
+    omp_unset_lock(&_lock);
+}
     else if (owner == -1) {
         throw "cannot unlock: lock is free";
     }

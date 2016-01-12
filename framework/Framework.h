@@ -118,21 +118,22 @@ private:
     int threadsPerQueue;
     int parallelFactor;
     int chunkSize;
-    TaskContainer<TParams, TResult> taskContainer;
+    int initialQueueSize;
 public:
     OptimizedProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
             int numThreads,
             int threadsPerQueue,
             int parallelFactor,
-            int chunkSize
+            int chunkSize,
+            int initialQueueSize
     ) :
             AbstractProblemSolver<TParams, TResult>(problem, numThreads),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
-            taskContainer(problem),
             parallelFactor(parallelFactor),
-            chunkSize(chunkSize) { }
+            chunkSize(chunkSize),
+            initialQueueSize(initialQueueSize) { }
 
     virtual TResult process(TParams params);
 };

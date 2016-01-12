@@ -120,7 +120,6 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
 ////                throw "invalid task picked from queue";
             }
         }
-
     }
     return finalResult;
 }

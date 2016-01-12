@@ -47,7 +47,7 @@ Args parseArguments(int argc, const char *const *argv) {
             ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1), "Number of threads per queue (-o)")
             ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread")
             ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(10000), "Lock free factory chunk size (-o)")
-            ("initialQueueSize,i", po::value<int>(&args.initialQueueSize)->default_value(10000), "Initial size of lock-free queue (-o)")
+            ("initialQueueSize,i", po::value<int>(&args.initialQueueSize)->default_value(1000), "Initial size of lock-free queue (-o)")
             ("help,h", "Produce help message");
 
     po::variables_map vm;
@@ -76,8 +76,7 @@ int main(int argc, char **argv) {
     }
     else {
         cout << "\nrunning optimized solver";
-        solver = new OptimizedProblemSolver<IntParam, IntResult>(p, config.numThreads, config.threadsPerQueue,
-                                                                 config.parallelFactor, config.chunkSize);
+        solver = new OptimizedProblemSolver<IntParam, IntResult>(p, config.numThreads, config.threadsPerQueue, config.parallelFactor, config.chunkSize, config.initialQueueSize);
     }
 
     // common config
@@ -88,11 +87,11 @@ int main(int argc, char **argv) {
     Timer timer;
     ThreadStats &threadStats = solver->getThreadStats();
     timer.start();
-    IntResult d = solver->process({config.startParam, config.endParam});
+    IntResult result = solver->process({config.startParam, config.endParam});
     timer.stop();
 
     threadStats.calculate();
-    cout << "\nresult: " << d
+    cout << "\nresult: " << result
     << "\nduration: " << timer.getDurationString()
     << "\naverage load: " << threadStats.getAverage()
     << "\nstd deviation: " << threadStats.getStdDeviation()
