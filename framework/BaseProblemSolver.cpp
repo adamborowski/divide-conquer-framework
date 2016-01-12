@@ -44,11 +44,9 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
             else {
                 threadStats.tick(threadId);
             }
-            task->computations.lock();
             if (task->state == TaskState::DONE || task->state == TaskState::DEAD) {
                 //we assume that is the second node from merge
                 task->state = TaskState::DEAD;
-                task->computations.unlock();
                 continue;
             }
             if (task->isRootTask) {
@@ -124,7 +122,6 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
 //                cout<<"invalid task picked from queue"<<endl;
 ////                throw "invalid task picked from queue";
             }
-            task->computations.unlock();
         }
 
     }

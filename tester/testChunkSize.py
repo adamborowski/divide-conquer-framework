@@ -1,7 +1,7 @@
 import modules.runner as runner
 
 results = []
-params = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000]
+params = [1, 100, 10000, 100000, 1000000, 10000000]
 params.reverse()
 base_config = {
     'n': 6,

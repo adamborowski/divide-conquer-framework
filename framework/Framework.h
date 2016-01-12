@@ -32,8 +32,6 @@ public:
     Task<TParams, TResult> *brother = nullptr;
 
     bool isRootTask = false;
-
-    OmpLock computations;
 };
 
 
