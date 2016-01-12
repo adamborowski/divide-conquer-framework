@@ -16,6 +16,7 @@ struct Args {
     double startParam;
     double endParam;
     int chunkSize;
+    int initialQueueSize;
 };
 
 void handler(int sig) {
@@ -35,25 +36,26 @@ void handler(int sig) {
 Args parseArguments(int argc, const char *const *argv) {
     Args args;
     namespace po = boost::program_options;
-    po::options_description desc("Divide & Conquer Framework demo");
+    po::options_description desc("Divide & Conquer Framework demo", 100);
     desc.add_options()
+
             ("debug,v", po::bool_switch(&args.debug)->default_value(false), "Display debug information")
             ("optimized,o", po::bool_switch(&args.optimized)->default_value(false), "Run optimized version")
             ("numThreads,n", po::value<int>(&args.numThreads)->default_value(1), "Number of threads")
             ("startParam,s", po::value<double>(&args.startParam)->default_value(0), "Start parameter")
             ("endParam,e", po::value<double>(&args.endParam)->default_value(100), "End parameter")
-            ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1),
-             "Number of threads per queue (-o)")
-            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1000),
-             "Lock free factory chunk size (-o)")
+            ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1), "Number of threads per queue (-o)")
+            ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread")
+            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(10000), "Lock free factory chunk size (-o)")
+            ("initialQueueSize,i", po::value<int>(&args.initialQueueSize)->default_value(10000), "Initial size of lock-free queue (-o)")
             ("help,h", "Produce help message");
-    ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread.");
+
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
     if (vm.count("help")) {
         cout << desc << "\n";
-        exit (0);
+        exit(0);
     }
     return args;
 }
