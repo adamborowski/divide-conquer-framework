@@ -29,12 +29,9 @@ TResult BaseProblemSolver<TParams, TResult>::process(TParams params) {
 
         //every thread iterates over common queue and processes each task
         this->output("started working");
-
+        Task<TParams, TResult> *task;
         while (work) {
-            Task<TParams, TResult> *task;
-
             task = taskContainer.pickFromQueue();
-
 
             if (task == nullptr) {
                 this->output("skip, no task!");
