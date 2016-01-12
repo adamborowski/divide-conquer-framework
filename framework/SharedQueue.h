@@ -7,22 +7,33 @@
 
 #include "OmpLock.h"
 #include <boost/lockfree/queue.hpp>
+#include <queue>
+
+//#define USE_STL_QUEUE
 
 /**
  * Queue shared across some threads.
  * We can't user #pragma omp critical, because it forces global scope of lock, for every queue instance
  * TOTO: is it worth to specify initial queue size as an argument?
  */
-template <class T>
+template<class T>
 class SharedQueue {
 private:
     OmpLock lock;
+#ifdef USE_STL_QUEUE
+    std::queue<T> queue;
+#else
     boost::lockfree::queue<T> queue;
+#endif
 public:
     SharedQueue(long initialSize);
+
     void put(T item);
+
     bool pick(T *item);
+
     void putMany(T *source, const int count);
+
     void pickMany(T *destination, const int count, int &numPicked);
 };
 

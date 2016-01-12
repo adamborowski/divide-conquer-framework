@@ -119,6 +119,7 @@ private:
     int parallelFactor;
     int chunkSize;
     int initialQueueSize;
+    ProblemImpl<TParams, TResult> &problem;
 public:
     OptimizedProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
@@ -129,6 +130,7 @@ public:
             int initialQueueSize
     ) :
             AbstractProblemSolver<TParams, TResult>(problem, numThreads),
+            problem(problem),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
             parallelFactor(parallelFactor),
