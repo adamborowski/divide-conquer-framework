@@ -69,7 +69,7 @@ public:
 
     Task<TParams, TResult> *pickFromQueue();
 
-    unsigned long getQueueSize(){
+    unsigned long getQueueSize() {
         return queue.size();
     }
 
@@ -119,19 +119,22 @@ private:
     int numThreads;
     int threadsPerQueue;
     int parallelFactor;
+    int chunkSize;
     TaskContainer<TParams, TResult> taskContainer;
 public:
     OptimizedProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
             int numThreads,
             int threadsPerQueue,
-            int parallelFactor
+            int parallelFactor,
+            int chunkSize
     ) :
             AbstractProblemSolver<TParams, TResult>(problem, numThreads),
             numThreads(numThreads),
             threadsPerQueue(threadsPerQueue),
             taskContainer(problem),
-            parallelFactor(parallelFactor) { }
+            parallelFactor(parallelFactor),
+            chunkSize(chunkSize) { }
 
     virtual TResult process(TParams params);
 };

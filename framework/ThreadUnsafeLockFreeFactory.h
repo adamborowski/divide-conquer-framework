@@ -13,11 +13,13 @@ class ThreadUnsafeLockFreeFactory {
 private:
     T *chunk;
     int chunkCounter;
+    int creationCounter;
     int chunkSize;
     void resetChunk();
 public:
     ThreadUnsafeLockFreeFactory(int chunkSize);
     T* create();
+    int getNumCreatedElements();
 };
 
 

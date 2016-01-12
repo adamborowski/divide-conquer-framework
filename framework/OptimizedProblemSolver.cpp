@@ -7,6 +7,7 @@
 
 using namespace std;
 
+
 template<class TParams, class TResult>
 class ThreadSafeTaskFactory {
     vector<ThreadUnsafeLockFreeFactory<Task<TParams, TResult>>> factories;
@@ -17,17 +18,23 @@ public:
 
     Task<TParams, TResult> *create(const int threadId) {
         Task<TParams, TResult> *a;
-//        a = factories[threadId].create();
-        a = new Task<TParams, TResult>;
+        a = factories[threadId].create();
         return a;
     }
 
+    int getNumCreatedTasks() {
+        int sum = 0;
+        for (int i = 0; i < factories.size(); i++) {
+            sum += factories[i].getNumCreatedElements();
+        }
+        return sum;
+    }
 };
 
 
 template<class TParams, class TResult>
 TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
-    ThreadSafeTaskFactory<TParams, TResult> taskFactory(this->numThreads, 100);
+    ThreadSafeTaskFactory<TParams, TResult> taskFactory(this->numThreads, chunkSize);
 
     omp_set_num_threads(this->numThreads);
     TResult finalResult;
@@ -75,8 +82,8 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                 this->output("got root task!");
             }
 
-            string common =
-                    "got task: (" + to_string(task->params.a) + " " + to_string(task->params.b) + ") / ";
+            string common = "got task (" + to_string(task->params.a) + " " +
+                            to_string(task->params.b) + ") / ";
 
             if (task->isRootTask and task->state == TaskState::COMPUTED) {
                 this->output(common + "root task = " + to_string(task->result));
@@ -122,7 +129,6 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
 
                 //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
                 Task<TParams, TResult> *parent = task->parent;
-                this->output(common + "parent = " + (parent == nullptr ? "nullptr" : "instance"));
                 parent->result = this->problem.merge(task->result, task->brother->result);
                 this->output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
                              to_string(task->brother->result) + " = " + to_string(parent->result));
@@ -134,20 +140,18 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
             }
             else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
                      task->brother->state == TaskState::AWAITING) {
-                //sytuacja, w której nie mamy jeszcze drugiego brata gotowego, zatem nic nie róbmy
+                this->output("sytuacja, w której nie mamy jeszcze drugiego brata gotowego, zatem nic nie róbmy");
             }
             else if (task->state == TaskState::DONE) {
-                //sytuacja, w której z kolejki przyszedł węzeł, który został zmergowany przez brata
+                this->output("sytuacja, w której z kolejki przyszedł węzeł, który został zmergowany przez brata");
             }
             else {
-//                int a = 0;
-//#pragma omp critical(output)
-//                cout<<"invalid task picked from queue"<<endl;
-////                throw "invalid task picked from queue";
-                }
+                this->output("invalid task picked from queue");
+            }
             task->computations.unlock();
         }
 
     }
+    this->output(to_string(taskFactory.getNumCreatedTasks())+" tasks created");
     return finalResult;
 }

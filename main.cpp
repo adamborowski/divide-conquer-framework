@@ -15,6 +15,7 @@ struct Args {
     int parallelFactor;
     double startParam;
     double endParam;
+    int chunkSize;
 };
 
 void handler(int sig) {
@@ -42,7 +43,9 @@ Args parseArguments(int argc, const char *const *argv) {
             ("startParam,s", po::value<double>(&args.startParam)->default_value(0), "start param")
             ("endParam,e", po::value<double>(&args.endParam)->default_value(100), "endParam")
             ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1),
-             "Number of threads per queue for optimized version");
+             "Number of threads per queue for optimized version")
+            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1000),
+             "Lock free factory chunk size");
     ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread.");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -67,7 +70,7 @@ int main(int argc, char **argv) {
     else {
         cout << "\nrunning optimized solver";
         solver = new OptimizedProblemSolver<IntParam, IntResult>(p, config.numThreads, config.threadsPerQueue,
-                                                                 config.parallelFactor);
+                                                                 config.parallelFactor, config.chunkSize);
     }
 
     // common config
