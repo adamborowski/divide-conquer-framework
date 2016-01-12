@@ -7,7 +7,7 @@ void ThreadUnsafeLockFreeFactory<T>::resetChunk() {
 }
 
 template<class T>
-ThreadUnsafeLockFreeFactory<T>::ThreadUnsafeLockFreeFactory(int chunkSize) : chunkSize(chunkSize), chunkCounter(0), creationCounter(0) {
+ThreadUnsafeLockFreeFactory<T>::ThreadUnsafeLockFreeFactory(long chunkSize) : chunkSize(chunkSize), chunkCounter(0), creationCounter(0) {
 }
 
 template<class T>

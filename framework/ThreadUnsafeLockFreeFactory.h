@@ -17,7 +17,7 @@ private:
     int chunkSize;
     void resetChunk();
 public:
-    ThreadUnsafeLockFreeFactory(int chunkSize);
+    ThreadUnsafeLockFreeFactory(long chunkSize);
     T* create();
     int getNumCreatedElements();
 };

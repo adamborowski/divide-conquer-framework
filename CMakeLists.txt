@@ -11,6 +11,6 @@ endif ()
 FIND_PACKAGE(Boost COMPONENTS program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 
-set(SOURCE_FILES main.cpp framework/Framework.cpp framework/AbstractProblemSolver.cpp framework/BaseProblemSolver.cpp test/Timer.cpp test/Timer.h framework/ThreadStats.cpp framework/ThreadStats.cpp framework/ThreadStats.h framework/OmpLock.cpp framework/OmpLock.h framework/ThreadUnsafeLockFreeFactory.cpp framework/ThreadUnsafeLockFreeFactory.h framework/SharedQueue.cpp framework/SharedQueue.h)
+set(SOURCE_FILES main.cpp framework/Framework.cpp framework/AbstractProblemSolver.cpp framework/BaseProblemSolver.cpp test/Timer.cpp test/Timer.h framework/ThreadStats.cpp framework/ThreadStats.cpp framework/ThreadStats.h framework/OmpLock.cpp framework/OmpLock.h framework/ThreadUnsafeLockFreeFactory.cpp framework/ThreadUnsafeLockFreeFactory.h framework/SharedQueue.cpp framework/SharedQueue.h framework/ThreadUnsafeLockFreeQueue.cpp framework/ThreadUnsafeLockFreeQueue.h)
 add_executable(divide_conquer_framework ${SOURCE_FILES})
 TARGET_LINK_LIBRARIES(divide_conquer_framework ${Boost_LIBRARIES})

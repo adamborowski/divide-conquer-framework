@@ -2,7 +2,9 @@
 #include <omp.h>
 #include <iostream>
 #include "ThreadUnsafeLockFreeFactory.h"
-#include "ThreadUnsafeLockFreeFactory.cpp"
+//#include "ThreadUnsafeLockFreeFactory.cpp"
+#include "ThreadUnsafeLockFreeQueue.h"
+#include "ThreadUnsafeLockFreeQueue.cpp"
 #include "SharedQueue.h"
 #include "SharedQueue.cpp"
 #include <unistd.h>
