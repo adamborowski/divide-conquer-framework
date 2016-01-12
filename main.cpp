@@ -37,16 +37,16 @@ Args parseArguments(int argc, const char *const *argv) {
     namespace po = boost::program_options;
     po::options_description desc("Divide & Conquer Framework demo");
     desc.add_options()
-            ("debug,v", po::bool_switch(&args.debug)->default_value(false), "Debug mode")
+            ("debug,v", po::bool_switch(&args.debug)->default_value(false), "Display debug information")
             ("optimized,o", po::bool_switch(&args.optimized)->default_value(false), "Run optimized version")
             ("numThreads,n", po::value<int>(&args.numThreads)->default_value(1), "Number of threads")
-            ("startParam,s", po::value<double>(&args.startParam)->default_value(0), "start param")
-            ("endParam,e", po::value<double>(&args.endParam)->default_value(100), "endParam")
+            ("startParam,s", po::value<double>(&args.startParam)->default_value(0), "Start parameter")
+            ("endParam,e", po::value<double>(&args.endParam)->default_value(100), "End parameter")
             ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1),
-             "Number of threads per queue for optimized version")
+             "Number of threads per queue (-o)")
             ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1000),
-             "Lock free factory chunk size")
-            ("help,h", "produce help message");
+             "Lock free factory chunk size (-o)")
+            ("help,h", "Produce help message");
     ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread.");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
