@@ -1,5 +1,4 @@
 #include "OmpLock.h"
-#include <omp.h>
 
 OmpLock::OmpLock() {
     owner = -1;
