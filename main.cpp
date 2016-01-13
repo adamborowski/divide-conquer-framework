@@ -47,7 +47,7 @@ Args parseArguments(int argc, const char *const *argv) {
             ("endParam,e", po::value<double>(&args.endParam)->default_value(10000), "End parameter")
             ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(0), "Number of threads per queue, 0 for global queue (-o)")
             ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread")
-            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1), "Lock free factory chunk size (-o)")
+            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1), "Lock free task factory chunk size (-o)")
             ("queueChunkSize,i", po::value<int>(&args.initialQueueSize)->default_value(1), "Size of lock-free queue factory chunk (-o)")
             ("queueChangeFactor,f", po::value<int>(&args.queueChangeFactor)->default_value(1), "How often thread puts task into different queue (-o)")
             ("help,h", "Produce help message");

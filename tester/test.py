@@ -1,7 +1,7 @@
 import modules.runner as runner
 
 base_config = {
-    'n': 6,
+    'n': 1,
     'e': 4000,
 }
 
