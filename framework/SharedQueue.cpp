@@ -89,3 +89,8 @@ bool SharedQueue<T>::pick(T *item) {
         return true;
     }
 }
+
+template<class T>
+int SharedQueue<T>::getCountNotSynchronized() {
+    return queue.getCount();
+}

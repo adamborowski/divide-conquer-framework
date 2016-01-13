@@ -22,6 +22,7 @@ private:
     Node<T> *first;
     Node<T> *last;
     Node<T> *trash;
+    int count;
 public:
     ThreadUnsafeLockFreeQueue(long initialSize);
 
@@ -32,6 +33,8 @@ public:
     void pop(T *where);
 
     void debugPrint();
+
+    int getCount();
 };
 
 

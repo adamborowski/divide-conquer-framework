@@ -44,6 +44,8 @@ public:
     void putMany(T *source, const int count);
 
     void pickMany(T *destination, const int count, int &numPicked);
+
+    int getCountNotSynchronized();
 };
 
 

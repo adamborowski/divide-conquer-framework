@@ -6,7 +6,7 @@
 #include "ThreadUnsafeLockFreeQueue.h"
 
 template<class T>
-ThreadUnsafeLockFreeQueue<T>::ThreadUnsafeLockFreeQueue(long initialSize) : factory(initialSize), first(nullptr), trash(nullptr), last(nullptr) {
+ThreadUnsafeLockFreeQueue<T>::ThreadUnsafeLockFreeQueue(long initialSize) : factory(initialSize), first(nullptr), trash(nullptr), last(nullptr), count(0) {
 
 }
 
@@ -33,11 +33,12 @@ void ThreadUnsafeLockFreeQueue<T>::put(T t) {
     if (first == nullptr) { // we put to empty queue
         first = last;
     }
+    count++;
 }
 
 template<class T>
 bool ThreadUnsafeLockFreeQueue<T>::empty() {
-    return first == nullptr;
+    return count == 0;
 }
 
 template<class T>
@@ -50,6 +51,7 @@ void ThreadUnsafeLockFreeQueue<T>::pop(T *where) {
     if (first == nullptr) {
         last = nullptr;
     }
+    count--;
 }
 
 template<class T>
@@ -67,4 +69,9 @@ void ThreadUnsafeLockFreeQueue<T>::debugPrint() {
         st = st->next;
     }
     std::cout.flush();
+}
+
+template<class T>
+int ThreadUnsafeLockFreeQueue<T>::getCount() {
+    return count;
 }

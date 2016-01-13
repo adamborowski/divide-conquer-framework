@@ -54,7 +54,8 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->state = TaskState::AWAITING;
     queue.put(rootTask);
     ThreadStats &threadStats = this->threadStats;
-    TaskPtr *taskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads];
+    TaskPtr *inputTaskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads];
+    TaskPtr *outputTaskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads * 2]; // for every input task we can produce maximum 2 sub-tasks
 
 #pragma omp parallel
     {
@@ -62,11 +63,14 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
 
         //every thread iterates over common queue and processes each task
         this->output("started working");
-        TaskPtr *taskBatch = &taskBatchesForAllThreads[parallelFactor * threadId];
+        TaskPtr *inputTaskBatch = &inputTaskBatchesForAllThreads[parallelFactor * threadId];
+        TaskPtr *outputTaskBatch = &outputTaskBatchesForAllThreads[parallelFactor * threadId * 2];
         TaskPtr task;
         int numTaskPicked;
+        int numTaskPut;
         while (work) {
-            queue.pickMany(taskBatch, parallelFactor, numTaskPicked);
+            queue.pickMany(inputTaskBatch, parallelFactor, numTaskPicked);
+            numTaskPut = 0;
 
             if (numTaskPicked == 0) {
                 this->output("skip, no tasks!");
@@ -75,9 +79,10 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
             }
             else {
                 threadStats.tickMany(threadId, numTaskPicked);
+                this->output("picked " + to_string(numTaskPicked) + " tasks. Queue count is: " + to_string(queue.getCountNotSynchronized()));
             }
             for (int i = 0; i < numTaskPicked; i++) {
-                task = taskBatch[i];
+                task = inputTaskBatch[i];
                 if (task->state == TaskState::DONE || task->state == TaskState::DEAD) {
                     //we assume that is the second node from merge
                     task->state = TaskState::DEAD;
@@ -118,15 +123,14 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                         const DividedParams<TParams> &dividedParams = this->problem.divide(task->params);
                         task1->params = dividedParams.param1;
                         task2->params = dividedParams.param2;
-                        queue.put(task1);
-                        queue.put(task2);
+                        outputTaskBatch[numTaskPut++] = task1;
+                        outputTaskBatch[numTaskPut++] = task2;
                     }
                     else {
                         task->result = this->problem.compute(task->params); // calculate directly the result
                         task->state = TaskState::COMPUTED; // change the state to "ready to merge"
                         this->output(common + "compute = ~" + to_string(task->result));
-                        queue.put(task); // put task to be merged later
-
+                        outputTaskBatch[numTaskPut++] = task; // put task to be merged later
                     }
                 }
                 else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
@@ -141,7 +145,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                     task->state = TaskState::DEAD; // we know that task doesn't exist in queue so it will be always dead
                     task->brother->state = TaskState::DONE; // we don't know if brother is in queue
                     //put parent into queue again
-                    queue.put(parent);
+                    outputTaskBatch[numTaskPut++] = parent;
                 }
                 else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
                          task->brother->state == TaskState::AWAITING) {
@@ -154,6 +158,8 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                     this->output("invalid task picked from queue");
                 }
             }
+            queue.putMany(outputTaskBatch, numTaskPut);
+            this->output("put " + to_string(numTaskPut) + " tasks.");
         }
     }
     this->output(to_string(taskFactory.getNumCreatedTasks()) + " tasks created");
