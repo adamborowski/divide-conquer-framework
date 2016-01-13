@@ -15,6 +15,7 @@ class ThreadStats {
     double stdDeviation;
 public:
     void tick(int threadId);
+    void tickMany(int threadId, int howMany);
 
     void calculate();
 

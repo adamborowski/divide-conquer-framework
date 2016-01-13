@@ -39,14 +39,14 @@ public:
 template<class TParams, class TResult>
 TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     ThreadSafeTaskFactory<TParams, TResult> taskFactory(this->numThreads, chunkSize);
-    SharedQueue<Task<TParams, TResult> *> queue(initialQueueSize);
+    SharedQueue<TaskPtr> queue(initialQueueSize);
 
     omp_set_num_threads(this->numThreads);
     TResult finalResult;
     bool work = true;
 
     // create initial task
-    Task<TParams, TResult> *rootTask = taskFactory.create(0);
+    TaskPtr rootTask = taskFactory.create(0);
     rootTask->parent = nullptr;
     rootTask->brother = nullptr;
     rootTask->isRootTask = true;
@@ -54,6 +54,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->state = TaskState::AWAITING;
     queue.put(rootTask);
     ThreadStats &threadStats = this->threadStats;
+    TaskPtr *taskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads];
 
 #pragma omp parallel
     {
@@ -61,96 +62,99 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
 
         //every thread iterates over common queue and processes each task
         this->output("started working");
-        Task<TParams, TResult> *task;
-        bool taskPicked;
+        TaskPtr *taskBatch = &taskBatchesForAllThreads[parallelFactor * threadId];
+        TaskPtr task;
+        int numTaskPicked;
         while (work) {
-            taskPicked = queue.pick(&task);
+            queue.pickMany(taskBatch, parallelFactor, numTaskPicked);
 
-            if (!taskPicked) {
-                this->output("skip, no task!");
+            if (numTaskPicked == 0) {
+                this->output("skip, no tasks!");
                 usleep(100000);
                 continue;
             }
             else {
-                threadStats.tick(threadId);
+                threadStats.tickMany(threadId, numTaskPicked);
             }
-            if (task->state == TaskState::DONE || task->state == TaskState::DEAD) {
-                //we assume that is the second node from merge
-                task->state = TaskState::DEAD;
-                continue;
-            }
-            if (task->isRootTask) {
-                this->output("got root task!");
-            }
+            for (int i = 0; i < numTaskPicked; i++) {
+                task = taskBatch[i];
+                if (task->state == TaskState::DONE || task->state == TaskState::DEAD) {
+                    //we assume that is the second node from merge
+                    task->state = TaskState::DEAD;
+                    continue;
+                }
+                if (task->isRootTask) {
+                    this->output("got root task!");
+                }
 
-            string common = "got task (" + to_string(task->params.a) + " " +
-                            to_string(task->params.b) + ") / ";
+                string common = "got task (" + to_string(task->params.a) + " " +
+                                to_string(task->params.b) + ") / ";
 
-            if (task->isRootTask and task->state == TaskState::COMPUTED) {
-                this->output(common + "root task = " + to_string(task->result));
+                if (task->isRootTask and task->state == TaskState::COMPUTED) {
+                    this->output(common + "root task = " + to_string(task->result));
 
-                //this is the root node = we just have the final result
-                work = false;
-                finalResult = task->result;
-                task->state = TaskState::DEAD;
-            }
-            else if (task->state == TaskState::AWAITING) {
+                    //this is the root node = we just have the final result
+                    work = false;
+                    finalResult = task->result;
+                    task->state = TaskState::DEAD;
+                }
+                else if (task->state == TaskState::AWAITING) {
 
-                //this node need's calculation or has to be divided
-                if (this->problem.testDivide(task->params)) {
-                    this->output(common + "divide");
-                    // divide task into smaller tasks and push to queue
-                    Task<TParams, TResult> *task1 = taskFactory.create(threadId);
-                    Task<TParams, TResult> *task2 = taskFactory.create(threadId);
+                    //this node need's calculation or has to be divided
+                    if (this->problem.testDivide(task->params)) {
+                        this->output(common + "divide");
+                        // divide task into smaller tasks and push to queue
+                        Task<TParams, TResult> *task1 = taskFactory.create(threadId);
+                        Task<TParams, TResult> *task2 = taskFactory.create(threadId);
 
-                    task1->state = TaskState::AWAITING;
-                    task2->state = TaskState::AWAITING;
+                        task1->state = TaskState::AWAITING;
+                        task2->state = TaskState::AWAITING;
 
-                    task1->parent = task;
-                    task2->parent = task;
-                    task1->brother = task2;
-                    task2->brother = task1;
+                        task1->parent = task;
+                        task2->parent = task;
+                        task1->brother = task2;
+                        task2->brother = task1;
 
-                    const DividedParams<TParams> &dividedParams = this->problem.divide(task->params);
-                    task1->params = dividedParams.param1;
-                    task2->params = dividedParams.param2;
-                    queue.put(task1);
-                    queue.put(task2);
+                        const DividedParams<TParams> &dividedParams = this->problem.divide(task->params);
+                        task1->params = dividedParams.param1;
+                        task2->params = dividedParams.param2;
+                        queue.put(task1);
+                        queue.put(task2);
+                    }
+                    else {
+                        task->result = this->problem.compute(task->params); // calculate directly the result
+                        task->state = TaskState::COMPUTED; // change the state to "ready to merge"
+                        this->output(common + "compute = ~" + to_string(task->result));
+                        queue.put(task); // put task to be merged later
+
+                    }
+                }
+                else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
+                         task->brother->state == TaskState::COMPUTED) {
+
+                    //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
+                    Task<TParams, TResult> *parent = task->parent;
+                    parent->result = this->problem.merge(task->result, task->brother->result);
+                    this->output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
+                                 to_string(task->brother->result) + " = " + to_string(parent->result));
+                    parent->state = TaskState::COMPUTED;
+                    task->state = TaskState::DEAD; // we know that task doesn't exist in queue so it will be always dead
+                    task->brother->state = TaskState::DONE; // we don't know if brother is in queue
+                    //put parent into queue again
+                    queue.put(parent);
+                }
+                else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
+                         task->brother->state == TaskState::AWAITING) {
+                    this->output("sytuacja, w której nie mamy jeszcze drugiego brata gotowego, zatem nic nie róbmy");
+                }
+                else if (task->state == TaskState::DONE) {
+                    this->output("sytuacja, w której z kolejki przyszedł węzeł, który został zmergowany przez brata");
                 }
                 else {
-                    task->result = this->problem.compute(task->params); // calculate directly the result
-                    task->state = TaskState::COMPUTED; // change the state to "ready to merge"
-                    this->output(common + "compute = ~" + to_string(task->result));
-                    queue.put(task); // put task to be merged later
-
+                    this->output("invalid task picked from queue");
                 }
             }
-            else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
-                     task->brother->state == TaskState::COMPUTED) {
-
-                //we have two brothers ready to merge, put parent task to queue and mark it as CALCULATED
-                Task<TParams, TResult> *parent = task->parent;
-                parent->result = this->problem.merge(task->result, task->brother->result);
-                this->output(common + "merge brothers ~" + to_string(task->result) + " and ~" +
-                             to_string(task->brother->result) + " = " + to_string(parent->result));
-                parent->state = TaskState::COMPUTED;
-                task->state = TaskState::DEAD; // we know that task doesn't exist in queue so it will be always dead
-                task->brother->state = TaskState::DONE; // we don't know if brother is in queue
-                //put parent into queue again
-                queue.put(parent);
-            }
-            else if (task->parent != nullptr and task->state == TaskState::COMPUTED and
-                     task->brother->state == TaskState::AWAITING) {
-                this->output("sytuacja, w której nie mamy jeszcze drugiego brata gotowego, zatem nic nie róbmy");
-            }
-            else if (task->state == TaskState::DONE) {
-                this->output("sytuacja, w której z kolejki przyszedł węzeł, który został zmergowany przez brata");
-            }
-            else {
-                this->output("invalid task picked from queue");
-            }
         }
-
     }
     this->output(to_string(taskFactory.getNumCreatedTasks()) + " tasks created");
     return finalResult;

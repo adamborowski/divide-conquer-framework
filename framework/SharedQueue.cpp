@@ -46,7 +46,7 @@ void SharedQueue<T>::pickMany(T *destination, const int count, int &numPicked) {
 #elif USE_BOOST_QUEUE
             queue.unsynchronized_pop(destination[i]);
 #elif USE_CUSTOM_QUEUE
-            queue.pop(destination[i]);
+            queue.pop(&destination[i]);
 #endif
         }
     }

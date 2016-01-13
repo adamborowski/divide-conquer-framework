@@ -99,7 +99,6 @@ template<class TParams, class TResult>
 class BaseProblemSolver : public AbstractProblemSolver<TParams, TResult> {
 private:
     TaskContainer<TParams, TResult> taskContainer;
-
 public:
     BaseProblemSolver(
             ProblemImpl<TParams, TResult> &problem,
@@ -113,6 +112,7 @@ public:
 
 template<class TParams, class TResult>
 class OptimizedProblemSolver : public AbstractProblemSolver<TParams, TResult> {
+    typedef Task<TParams, TResult>* TaskPtr;
 private:
     int numThreads;
     int threadsPerQueue;

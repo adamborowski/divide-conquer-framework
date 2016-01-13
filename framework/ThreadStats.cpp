@@ -5,6 +5,10 @@ void ThreadStats::tick(int threadId) {
     values[threadId]++;
 }
 
+void ThreadStats::tickMany(int threadId, int howMany) {
+    values[threadId] += howMany;
+}
+
 void ThreadStats::calculate() {
     double sum = 0;
     for (int i = 0; i < numThreads; i++) {
@@ -15,7 +19,7 @@ void ThreadStats::calculate() {
     for (int i = 0; i < numThreads; i++) {
         sum += (values[i] - average) * (values[i] - average);
     }
-    stdDeviation = sqrt(sum/(numThreads-1));
+    stdDeviation = sqrt(sum / (numThreads - 1));
 
 }
 
