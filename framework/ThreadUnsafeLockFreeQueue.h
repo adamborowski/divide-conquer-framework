@@ -23,6 +23,8 @@ private:
     Node<T> *last;
     Node<T> *trash;
     int count;
+    int putCount;
+    int popCount;
 public:
     ThreadUnsafeLockFreeQueue(long initialSize);
 
@@ -35,6 +37,8 @@ public:
     void debugPrint();
 
     int getCount();
+    int getPutCount();
+    int getPopCount();
 };
 
 

@@ -6,7 +6,7 @@
 #include "ThreadUnsafeLockFreeQueue.h"
 
 template<class T>
-ThreadUnsafeLockFreeQueue<T>::ThreadUnsafeLockFreeQueue(long initialSize) : factory(initialSize), first(nullptr), trash(nullptr), last(nullptr), count(0) {
+ThreadUnsafeLockFreeQueue<T>::ThreadUnsafeLockFreeQueue(long initialSize) : factory(initialSize), first(nullptr), trash(nullptr), last(nullptr), count(0), putCount(0), popCount(0) {
 
 }
 
@@ -34,6 +34,7 @@ void ThreadUnsafeLockFreeQueue<T>::put(T t) {
         first = last;
     }
     count++;
+    putCount++;
 }
 
 template<class T>
@@ -52,6 +53,7 @@ void ThreadUnsafeLockFreeQueue<T>::pop(T *where) {
         last = nullptr;
     }
     count--;
+    popCount++;
 }
 
 template<class T>
@@ -74,4 +76,14 @@ void ThreadUnsafeLockFreeQueue<T>::debugPrint() {
 template<class T>
 int ThreadUnsafeLockFreeQueue<T>::getCount() {
     return count;
+}
+
+template<class T>
+int ThreadUnsafeLockFreeQueue<T>::getPutCount() {
+    return putCount;
+}
+
+template<class T>
+int ThreadUnsafeLockFreeQueue<T>::getPopCount() {
+    return popCount;
 }

@@ -9,7 +9,7 @@
  * Average and Std deviation
  */
 class ThreadStats {
-    double *values;
+    long *values;
     int numThreads;
     double average;
     double stdDeviation;
@@ -22,6 +22,8 @@ public:
     double getAverage();
 
     double getStdDeviation();
+
+    long getThreadTicks(int threadId);
 
     ThreadStats(int numThreads);
 

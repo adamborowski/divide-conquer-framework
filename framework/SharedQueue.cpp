@@ -94,3 +94,13 @@ template<class T>
 int SharedQueue<T>::getCountNotSynchronized() {
     return queue.getCount();
 }
+
+template<class T>
+int SharedQueue<T>::getPutCountNotSynchronized() {
+    return queue.getPutCount();
+}
+
+template<class T>
+int SharedQueue<T>::getPopCountNotSynchronized() {
+    return queue.getPopCount();
+}

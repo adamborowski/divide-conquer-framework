@@ -32,7 +32,7 @@ def parse(s):
     return {
         'result': float(re.search("result: (.*)", s).group(1)),
         'duration': int(re.search("duration: (.*)", s).group(1)),
-        'average_load': float(re.search("average load: (.*)", s).group(1)),
+        'average_load': float(re.search("average thread load: (.*)", s).group(1)),
         'std_deviation': float(re.search("std deviation: (.*)", s).group(1))
     }
 

@@ -46,6 +46,8 @@ public:
     void pickMany(T *destination, const int count, int &numPicked);
 
     int getCountNotSynchronized();
+    int getPutCountNotSynchronized();
+    int getPopCountNotSynchronized();
 };
 
 

@@ -17,6 +17,7 @@ struct Args {
     double endParam;
     int chunkSize;
     int initialQueueSize;
+    int queueChangeFactor;
 };
 
 void handler(int sig) {
@@ -43,11 +44,12 @@ Args parseArguments(int argc, const char *const *argv) {
             ("optimized,o", po::bool_switch(&args.optimized)->default_value(false), "Run optimized version")
             ("numThreads,n", po::value<int>(&args.numThreads)->default_value(1), "Number of threads")
             ("startParam,s", po::value<double>(&args.startParam)->default_value(0), "Start parameter")
-            ("endParam,e", po::value<double>(&args.endParam)->default_value(100), "End parameter")
-            ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(1), "Number of threads per queue (-o)")
+            ("endParam,e", po::value<double>(&args.endParam)->default_value(10000), "End parameter")
+            ("threadsPerQueue,q", po::value<int>(&args.threadsPerQueue)->default_value(0), "Number of threads per queue, 0 for global equeue (-o)")
             ("parallelFactor,p", po::value<int>(&args.parallelFactor)->default_value(1), "Num task gained at once per thread")
-            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(10000), "Lock free factory chunk size (-o)")
-            ("initialQueueSize,i", po::value<int>(&args.initialQueueSize)->default_value(1000), "Initial size of lock-free queue (-o)")
+            ("chunkSize,c", po::value<int>(&args.chunkSize)->default_value(1), "Lock free factory chunk size (-o)")
+            ("initialQueueSize,i", po::value<int>(&args.initialQueueSize)->default_value(0), "Initial size of lock-free queue (-o)")
+            ("queueChangeFactor,f", po::value<int>(&args.queueChangeFactor)->default_value(1), "How often thread puts task into diferent queue (-o)")
             ("help,h", "Produce help message");
 
     po::variables_map vm;
@@ -65,6 +67,7 @@ Args parseArguments(int argc, const char *const *argv) {
  * program [base_or_optimized] [numThreads] [threadsPerQueue] [parallelFactor]
  */
 int main(int argc, char **argv) {
+    srand (time(NULL));
     signal(SIGSEGV, handler);   // install our handler
     Args config = parseArguments(argc, argv);
 
@@ -76,7 +79,7 @@ int main(int argc, char **argv) {
     }
     else {
         cout << "\nrunning optimized solver";
-        solver = new OptimizedProblemSolver<IntParam, IntResult>(p, config.numThreads, config.threadsPerQueue, config.parallelFactor, config.chunkSize, config.initialQueueSize);
+        solver = new OptimizedProblemSolver<IntParam, IntResult>(p, config.numThreads, config.threadsPerQueue, config.parallelFactor, config.chunkSize, config.initialQueueSize, config.queueChangeFactor);
     }
 
     // common config
@@ -93,7 +96,7 @@ int main(int argc, char **argv) {
     threadStats.calculate();
     cout << "\nresult: " << result
     << "\nduration: " << timer.getDurationString()
-    << "\naverage load: " << threadStats.getAverage()
+    << "\naverage thread load: " << threadStats.getAverage()
     << "\nstd deviation: " << threadStats.getStdDeviation()
     << "\n";
 

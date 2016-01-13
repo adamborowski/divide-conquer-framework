@@ -7,7 +7,12 @@
 #include "ThreadUnsafeLockFreeQueue.cpp"
 #include "SharedQueue.h"
 #include "SharedQueue.cpp"
+#include "RandomBucketAccessor.h"
+#include "RandomBucketAccessor.cpp"
+
 #include <unistd.h>
+
+//#define PRINT_LOAD_REPORT
 
 using namespace std;
 
@@ -39,7 +44,7 @@ public:
 template<class TParams, class TResult>
 TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     ThreadSafeTaskFactory<TParams, TResult> taskFactory(this->numThreads, chunkSize);
-    SharedQueue<TaskPtr> queue(initialQueueSize);
+    RandomBucketAccessor<SharedQueue<TaskPtr>> accessor(numThreads, threadsPerQueue, queueChangeFactor, initialQueueSize);
 
     omp_set_num_threads(this->numThreads);
     TResult finalResult;
@@ -52,7 +57,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
     rootTask->isRootTask = true;
     rootTask->params = params;
     rootTask->state = TaskState::AWAITING;
-    queue.put(rootTask);
+    accessor.getInputBucket(0)->put(rootTask);
     ThreadStats &threadStats = this->threadStats;
     TaskPtr *inputTaskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads];
     TaskPtr *outputTaskBatchesForAllThreads = new TaskPtr[parallelFactor * numThreads * 2]; // for every input task we can produce maximum 2 sub-tasks
@@ -60,6 +65,8 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
 #pragma omp parallel
     {
         const int threadId = omp_get_thread_num();
+
+        SharedQueue<TaskPtr> *inputQueue = accessor.getInputBucket(threadId);
 
         //every thread iterates over common queue and processes each task
         this->output("started working");
@@ -69,7 +76,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
         int numTaskPicked;
         int numTaskPut;
         while (work) {
-            queue.pickMany(inputTaskBatch, parallelFactor, numTaskPicked);
+            inputQueue->pickMany(inputTaskBatch, parallelFactor, numTaskPicked);
             numTaskPut = 0;
 
             if (numTaskPicked == 0) {
@@ -79,7 +86,7 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
             }
             else {
                 threadStats.tickMany(threadId, numTaskPicked);
-                this->output("picked " + to_string(numTaskPicked) + " tasks. Queue count is: " + to_string(queue.getCountNotSynchronized()));
+                this->output("picked " + to_string(numTaskPicked) + " tasks. Queue count is: " + to_string(inputQueue->getCountNotSynchronized()));
             }
             for (int i = 0; i < numTaskPicked; i++) {
                 task = inputTaskBatch[i];
@@ -158,10 +165,25 @@ TResult OptimizedProblemSolver<TParams, TResult>::process(TParams params) {
                     this->output("invalid task picked from queue");
                 }
             }
-            queue.putMany(outputTaskBatch, numTaskPut);
+            accessor.getOutputBucket(threadId)->putMany(outputTaskBatch, numTaskPut);
             this->output("put " + to_string(numTaskPut) + " tasks.");
         }
     }
-    this->output(to_string(taskFactory.getNumCreatedTasks()) + " tasks created");
+#ifdef PRINT_LOAD_REPORT
+    cout << "\nCreated " << taskFactory.getNumCreatedTasks() << " tasks";
+
+    SharedQueue<TaskPtr> *queues = accessor.getBuckets();
+    const int numQueues = accessor.getNumBuckets();
+    cout << "\nQueue traffic:";
+    for (int i = 0; i < numQueues; i++) {
+        cout << "\nQueue " << i << ": " << queues[i].getPutCountNotSynchronized() << " picks";
+    }
+    cout << "\nThread traffic:";
+    long sum = 0;
+    for (int i = 0; i < numThreads; i++) {
+        cout << "\nThread " << i << ": " << threadStats.getThreadTicks(i) << " picks";
+    }
+#endif
+
     return finalResult;
 }

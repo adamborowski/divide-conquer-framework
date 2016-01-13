@@ -112,13 +112,14 @@ public:
 
 template<class TParams, class TResult>
 class OptimizedProblemSolver : public AbstractProblemSolver<TParams, TResult> {
-    typedef Task<TParams, TResult>* TaskPtr;
+    typedef Task<TParams, TResult> *TaskPtr;
 private:
     int numThreads;
     int threadsPerQueue;
     int parallelFactor;
     int chunkSize;
     int initialQueueSize;
+    int queueChangeFactor;
     ProblemImpl<TParams, TResult> &problem;
 public:
     OptimizedProblemSolver(
@@ -127,7 +128,8 @@ public:
             int threadsPerQueue,
             int parallelFactor,
             int chunkSize,
-            int initialQueueSize
+            int initialQueueSize,
+            int queueChangeFactor
     ) :
             AbstractProblemSolver<TParams, TResult>(problem, numThreads),
             problem(problem),
@@ -135,7 +137,8 @@ public:
             threadsPerQueue(threadsPerQueue),
             parallelFactor(parallelFactor),
             chunkSize(chunkSize),
-            initialQueueSize(initialQueueSize) { }
+            initialQueueSize(initialQueueSize),
+            queueChangeFactor(queueChangeFactor) { }
 
     virtual TResult process(TParams params);
 };

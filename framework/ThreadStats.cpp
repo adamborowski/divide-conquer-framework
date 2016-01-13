@@ -32,7 +32,7 @@ double ThreadStats::getAverage() {
 }
 
 ThreadStats::ThreadStats(int numThreads) {
-    values = new double[numThreads];
+    values = new long[numThreads];
     for (int i = 0; i < numThreads; i++) {
         values[i] = 0;
     }
@@ -41,4 +41,8 @@ ThreadStats::ThreadStats(int numThreads) {
 
 ThreadStats::~ThreadStats() {
     delete values;
+}
+
+long ThreadStats::getThreadTicks(int threadId) {
+    return values[threadId];
 }
