@@ -17,7 +17,7 @@ def run(config):
         else:
             args += " -" + key + " " + str(value)
 
-    path = '/home/adam/.CLion12/system/cmake/generated/907752ba/907752ba/Debug/divide_conquer_framework'
+    path = '/macierz/home/137252ba/.CLion12/system/cmake/generated/e77f53a6/e77f53a6/Debug/divide_conquer_framework'
 
     path_args = path + args
     print('running ' + path_args)
