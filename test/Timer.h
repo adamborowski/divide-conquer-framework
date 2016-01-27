@@ -9,7 +9,7 @@
 using namespace std;
 
 class Timer {
-    typedef std::chrono::steady_clock clock;
+    typedef std::chrono::monotonic_clock clock;
 public:
     Timer();
 

@@ -3,7 +3,6 @@
 
 #include "OmpLock.h"
 #include "ThreadUnsafeLockFreeQueue.h"
-#include <boost/lockfree/queue.hpp>
 #include <queue>
 
 #define STL_QUEUE 1
